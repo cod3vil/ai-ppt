@@ -75,7 +75,7 @@ export const buildPageScaffoldHtml = (page: {
 }
 
 export const buildProjectIndexHtml = (title: string, pages: DeckPageFile[]): string => {
-  const safeTitle = escapeHtml(title || 'OhMyPPT Preview')
+  const safeTitle = escapeHtml(title || 'AI-PPT Preview')
   const pagesData = JSON.stringify(
     pages.map((page) => ({
       id: page.id || undefined,
@@ -283,7 +283,7 @@ export const buildProjectIndexScaffold = (
   pages: Array<{ pageNumber: number; title: string; pageId: string }>
 ): string => {
   return buildProjectIndexHtml(
-    title || 'OhMyPPT Preview',
+    title || 'AI-PPT Preview',
     pages.map((page) => ({
       pageNumber: page.pageNumber,
       pageId: page.pageId,

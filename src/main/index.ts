@@ -17,7 +17,7 @@ let agentManager: AgentManager | null = null
 let isShuttingDown = false
 let isTrayEnabled = false
 
-const APP_NAME = 'OhMyPPT'
+const APP_NAME = 'AI-PPT'
 const DEFAULT_WINDOW_WIDTH = 1200
 const DEFAULT_WINDOW_HEIGHT = 780
 const BASE_MIN_WIDTH = 880
@@ -25,8 +25,8 @@ const BASE_MIN_HEIGHT = 680
 const TITLEBAR_HEIGHT = 48
 const TITLEBAR_BACKGROUND = '#f4eddf'
 const TITLEBAR_SYMBOL_COLOR = '#5d6b4d'
-const GITHUB_LATEST_RELEASE_API = 'https://api.github.com/repos/arcsin1/oh-my-ppt/releases/latest'
-const GITHUB_RELEASES_URL = 'https://github.com/arcsin1/oh-my-ppt/releases'
+const RELEASE_LATEST_API = 'https://git.upapi.cn/api/v1/repos/njmd/ai-ppt/releases/latest'
+const RELEASES_URL = 'https://git.upapi.cn/njmd/ai-ppt/releases'
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {
@@ -73,7 +73,7 @@ function configureLogging(): void {
       const yearMonthDay = now.format('YYYY-MM-DD')
       return join(
         app.getPath('userData'),
-        'ohmyppt_logs',
+        'aippt_logs',
         yearMonth,
         `${yearMonthDay}-v${app.getVersion()}.log`
       )
@@ -116,9 +116,9 @@ async function fetchLatestRelease(): Promise<UpdateAvailablePayload | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 8000)
   try {
-    const response = await fetch(GITHUB_LATEST_RELEASE_API, {
+    const response = await fetch(RELEASE_LATEST_API, {
       headers: {
-        Accept: 'application/vnd.github+json',
+        Accept: 'application/json',
         'User-Agent': `${APP_NAME}/${app.getVersion()}`
       },
       signal: controller.signal
@@ -146,7 +146,7 @@ async function fetchLatestRelease(): Promise<UpdateAvailablePayload | null> {
     return {
       currentVersion,
       latestVersion,
-      releaseUrl: release.html_url || GITHUB_RELEASES_URL,
+      releaseUrl: release.html_url || RELEASES_URL,
       releaseName: release.name,
       publishedAt: release.published_at
     }
@@ -277,15 +277,15 @@ if (gotSingleInstanceLock) {
 
   app.whenReady().then(async () => {
     configureLogging()
-    electronApp.setAppUserModelId('com.ohmyppt.app')
+    electronApp.setAppUserModelId('cn.upapi.aippt')
 
-    const dbPath = is.dev ? join(process.cwd(), 'ohmyppt.dev.db') : undefined
+    const dbPath = is.dev ? join(process.cwd(), 'ai-ppt.dev.db') : undefined
     db = new PPTDatabase(dbPath)
     await db.init()
     setStyleDb(db)
     log.info('[app] database initialized', {
       env: is.dev ? 'dev' : 'prod',
-      dbPath: dbPath || 'userData/ohmyppt.db',
+      dbPath: dbPath || 'userData/ai-ppt.db',
     })
     agentManager = new AgentManager(db)
 

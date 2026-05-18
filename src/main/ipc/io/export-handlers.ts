@@ -90,8 +90,8 @@ export function registerExportHandlers(ctx: IpcContext): void {
     const sessionTitle =
       typeof session.title === 'string' && session.title.trim().length > 0
         ? session.title.trim()
-        : `ohmyppt-${sessionId}`
-    const sanitizedBaseName = sanitizeExportBaseName(sessionTitle, `ohmyppt-${sessionId}`)
+        : `ai-ppt-${sessionId}`
+    const sanitizedBaseName = sanitizeExportBaseName(sessionTitle, `ai-ppt-${sessionId}`)
 
     const ownerWindow =
       BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getFocusedWindow() ?? mainWindow
@@ -186,7 +186,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
     }
 
     const outputParentDir = directoryResult.filePaths[0]
-    const outputDir = path.join(outputParentDir, `ohmyppt-export-image_${nanoid(8)}`)
+    const outputDir = path.join(outputParentDir, `ai-ppt-export-image_${nanoid(8)}`)
     const warnings: string[] = []
 
     try {
@@ -251,11 +251,11 @@ export function registerExportHandlers(ctx: IpcContext): void {
     const sessionTitle =
       typeof session.title === 'string' && session.title.trim().length > 0
         ? session.title.trim()
-        : `ohmyppt-${sessionId}`
+        : `ai-ppt-${sessionId}`
     const prefix = imageOnly ? '【Image】' : '【Edit】'
     const sanitizedBaseName = sanitizeExportBaseName(
       `${prefix}${sessionTitle}`,
-      `ohmyppt-${sessionId}`
+      `ai-ppt-${sessionId}`
     )
 
     const ownerWindow =
@@ -328,7 +328,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
       try {
         await writeHtmlToPptx(saveResult.filePath, {
           title: sessionTitle,
-          author: 'OhMyPPT',
+          author: 'AI-PPT',
           slides,
           embeddedFonts: embeddedFonts.length > 0 ? embeddedFonts : undefined
         })
@@ -342,7 +342,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
         embeddedFonts = []
         await writeHtmlToPptx(saveResult.filePath, {
           title: sessionTitle,
-          author: 'OhMyPPT',
+          author: 'AI-PPT',
           slides
         })
       }
@@ -422,7 +422,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
       }
 
       // Create output folder
-      const outputFolder = path.join(outputParentDir, `ohmyppt-${nanoid(8)}`)
+      const outputFolder = path.join(outputParentDir, `ai-ppt-${nanoid(8)}`)
       fs.mkdirSync(outputFolder, { recursive: true })
 
       log.info('[export:slidePack] starting', { sessionId, projectDir, outputFolder })

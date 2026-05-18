@@ -143,6 +143,16 @@ body {
   animation: shell-enter 280ms ease-out;
 }
 
+.ai-ppt-brand {
+  background-image: linear-gradient(110deg, #18a0fb 0%, #7c3aed 34%, #f43f5e 50%, #7c3aed 66%, #18a0fb 100%);
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 16px rgba(124, 58, 237, 0.34));
+  animation: ai-ppt-brand-shimmer 4.8s ease-in-out infinite;
+}
+
 .soft-card {
   background: linear-gradient(165deg, rgba(255, 252, 247, 0.93), rgba(244, 238, 225, 0.88));
   box-shadow: 0 14px 34px rgba(88, 75, 56, 0.12), 0 2px 8px rgba(79, 66, 49, 0.08);
@@ -273,6 +283,16 @@ body {
   }
 }
 
+@keyframes ai-ppt-brand-shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
 .gen-grid {
   background-image:
     linear-gradient(rgba(132, 141, 102, 0.16) 1px, transparent 1px),
@@ -315,5 +335,11 @@ body {
   }
   to {
     background-position: 220% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-ppt-brand {
+    animation: none;
   }
 }

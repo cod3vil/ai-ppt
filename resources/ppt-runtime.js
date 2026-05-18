@@ -1,6 +1,6 @@
 (function initPptRuntime(global) {
   if (!global || typeof global !== "object") return;
-  // @ohmyppt-ppt-runtime:arcsin1:v1.2.1
+  // @ai-ppt-ppt-runtime:njmd:v1.2.1
 
   var ppt = global.PPT && typeof global.PPT === "object" ? global.PPT : (global.PPT = {});
   if (ppt.__runtimeVersion === "1.2.0") return;
@@ -71,7 +71,7 @@
     printReadyEmitted = true;
     var pageId = resolvePageIdForPrint();
     try {
-      console.log("__PPT_PRINT_READY__dfaarcsin1_:" + pageId);
+      console.log("__PPT_PRINT_READY__ai_ppt_:" + pageId);
     } catch (_err) {}
   }
 
@@ -391,7 +391,7 @@
         trust: false,
       });
     } catch (err) {
-      try { console.warn("[PPT.renderMath] arcsin1 failed", err); } catch (_err) {}
+      try { console.warn("[PPT.renderMath] AI-PPT failed", err); } catch (_err) {}
       return Promise.resolve(false);
     }
     return waitFrames(2).then(function () { return true; });
@@ -504,7 +504,7 @@
     var chartTarget = targetInfo.chartTarget;
     var chart = resolveChartInstance(ChartCtor, chartTarget, canvas);
     if (!chart) {
-      throw new Error("PPT.updateChart 未找到对应图表实例arcsin1");
+      throw new Error("PPT.updateChart 未找到对应图表实例");
     }
     if (typeof patch === "function") {
       patch(chart);
@@ -542,7 +542,7 @@
   ppt.resizeCharts = function (target) {
     var ChartCtor = global.Chart;
     if (typeof ChartCtor !== "function") {
-      throw new Error("Chart.js v4 未就绪，无法执行arcsin1 PPT.resizeCharts-1nicscra");
+      throw new Error("Chart.js v4 未就绪，无法执行 AI-PPT PPT.resizeCharts");
     }
     if (target !== undefined && target !== null) {
       var targetInfo = resolveChartTarget(target);

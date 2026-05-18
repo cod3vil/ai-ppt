@@ -14,7 +14,7 @@ export function buildInspectorInjectScript(options?: { mode?: 'inspect' | 'text-
   const SCAFFOLD_BLOCK_IDS = new Set(["content", "page", "root"]);
   const uiMessage = (zh, en) => {
     try {
-      return window.localStorage.getItem("oh-my-ppt:lang") === "en" ? en : zh;
+      return window.localStorage.getItem("ai-ppt:lang") === "en" ? en : zh;
     } catch (_error) {
       return zh;
     }

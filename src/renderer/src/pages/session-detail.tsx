@@ -1224,7 +1224,7 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleCopyElement = (): void => {
     if (!textSelection || !selectedPage?.pageId || !selectedPage.htmlPath) return
-    const blockId = 'select-arcsin1-' + nanoid(8)
+    const blockId = 'select-ai-ppt-' + nanoid(8)
     const newSelector = previewIframeRef.current?.copyElement(textSelection.selector, blockId)
     if (!newSelector) return
     const bounds = textSelection.bounds
@@ -1255,7 +1255,7 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleAddElement = (relativePath: string, _fileName: string): void => {
     if (!id || !selectedPage?.pageId || !selectedPage.htmlPath) return
-    const blockId = 'select-arcsin1-' + nanoid(8)
+    const blockId = 'select-ai-ppt-' + nanoid(8)
     const parentSelector = `body[data-page-id="${selectedPage.pageId}"] [data-ppt-guard-root="1"]`
     const isVideo = /^\.\/videos\//i.test(relativePath)
     // Offset each added element so they don't overlap

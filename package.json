@@ -1,10 +1,10 @@
 {
-  "name": "oh-my-ppt",
+  "name": "ai-ppt",
   "version": "2.0.9",
-  "description": "Oh My PPT - Local-first AI presentation workbench",
+  "description": "AI-PPT - Local-first AI presentation workbench",
   "main": "./out/main/index.js",
-  "author": "arcsin1",
-  "homepage": "https://github.com/arcsin1/oh-my-ppt",
+  "author": "NJMD",
+  "homepage": "https://git.upapi.cn/njmd/ai-ppt",
   "license": "MIT",
   "type": "module",
   "scripts": {

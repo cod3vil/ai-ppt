@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { cn } from '@renderer/lib/utils'
 import { Home, FolderOpen, Settings, Plus, ArrowLeft, SwatchBook, Type } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
-import logoUrl from '@renderer/assets/images/logo.png'
 import { useT } from '@renderer/i18n'
 import { ipc } from '@renderer/lib/ipc'
 
@@ -40,9 +39,8 @@ export function Sidebar(): React.JSX.Element {
   return (
     <aside className="flex h-full w-full flex-col bg-transparent">
       <div className="px-2 pt-1">
-        <div className="mt-1 flex items-center gap-1">
-          <img src={logoUrl} alt="Oh My PPT" className="h-14 w-14 select-none" draggable={false} />
-          <h1 className="organic-serif text-[22px] font-semibold leading-none text-[#3e4a32]">Oh My PPT</h1>
+        <div className="mt-4 px-4">
+          <h1 className="ai-ppt-brand inline-block text-[27px] font-black leading-none tracking-normal">AI-PPT</h1>
         </div>
         <p className="mt-1 text-xs text-[#7f876e] px-4">{t('nav.tagline')}</p>
       </div>

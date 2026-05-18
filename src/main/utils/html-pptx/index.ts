@@ -359,7 +359,7 @@ export const buildHtmlToPptxExtractScript = (options: HtmlToPptxExtractOptions):
     };
 
     const pointerStyle = document.createElement('style');
-    pointerStyle.id = 'ohmyppt-paint-order-pointer-events';
+    pointerStyle.id = 'aippt-paint-order-pointer-events';
     pointerStyle.textContent = '[data-pptx-paint-id] { pointer-events: auto !important; }';
     document.head.appendChild(pointerStyle);
     try {

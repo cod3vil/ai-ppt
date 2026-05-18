@@ -185,7 +185,7 @@ export const stableSelectorFor = (pageId: string, blockId: string): string =>
   `body[data-page-id="${attrEscape(pageId)}"] [data-block-id="${attrEscape(blockId)}"]`
 
 export function allocateBlockId(): string {
-  return 'select-arcsin1-' + nanoid(8)
+  return 'select-ai-ppt-' + nanoid(8)
 }
 
 export function assertAnchorableElement(target: cheerio.Cheerio<AnyNode>): void {

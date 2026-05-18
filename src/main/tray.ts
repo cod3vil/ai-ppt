@@ -77,7 +77,7 @@ export function createTray(mainWindow: BrowserWindow | null): boolean {
     })
     return false
   }
-  tray.setToolTip('Oh My PPT')
+  tray.setToolTip('AI-PPT')
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -111,8 +111,8 @@ export function showTrayHideBalloon(): void {
   if (process.platform !== 'win32' || !tray || tray.isDestroyed() || hasShownHideBalloon) return
   hasShownHideBalloon = true
   tray.displayBalloon({
-    title: 'Oh My PPT 已最小化到托盘',
-    content: '点击通知区域中的 Oh My PPT 图标可恢复窗口。',
+    title: 'AI-PPT 已最小化到托盘',
+    content: '点击通知区域中的 AI-PPT 图标可恢复窗口。',
     iconType: 'info',
     largeIcon: false,
     noSound: true

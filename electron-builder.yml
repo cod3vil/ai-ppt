@@ -1,5 +1,5 @@
-appId: com.ohmyppt.app
-productName: OhMyPPT
+appId: cn.upapi.aippt
+productName: AI-PPT
 directories:
   buildResources: build
 files:
@@ -29,7 +29,7 @@ files:
   - '!**/*.tsbuildinfo'
   - '!*.db'
   - '!*.db-*'
-  - '!{ohmyppt.dev.db,ohmyppt.db}'
+  - '!{ohmyppt.dev.db,ohmyppt.db,ai-ppt.dev.db,ai-ppt.db}'
   - '!thumb.png'
   - '!node_modules/tiktoken'
   - '!node_modules/web-streams-polyfill'
@@ -49,7 +49,7 @@ win:
     - target: nsis
       arch:
         - x64
-  executableName: ohmyppt
+  executableName: ai-ppt
   icon: build/icons/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -84,13 +84,13 @@ linux:
     - AppImage
     - deb
   icon: build/icons/icon.png
-  maintainer: arcsin1
+  maintainer: NJMD
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
   provider: generic
-  url: https://example.com/auto-updates
+  url: https://git.upapi.cn/njmd/ai-ppt/releases/download/latest
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

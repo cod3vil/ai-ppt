@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="thumb.png" alt="Oh My PPT" width="200" />
+  <img src="thumb.png" alt="AI-PPT" width="200" />
   <br/>
   <br/>
 
@@ -10,7 +10,7 @@
 ![React](https://img.shields.io/badge/React-App-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
 
-**Oh My PPT - Local-first AI Slide Deck Generator & Editor**
+**AI-PPT - Local-first AI Slide Deck Generator & Editor**
 
 [中文](./README_ZH.md) | [Why](#why) • [Features](#features) • [Workflow](#workflow) • [Changelog](./CHANGELOG.md) • [Reference](#reference) • [Usage Notes](#usage-notes)
 
@@ -20,9 +20,9 @@
     Local-first · Works offline, works for you.
   </p>
 
-  <img src="https://arcsin1.github.io/ohmyppt.gif" alt="Oh My PPT" width="600" />
+  <img src="./docs/images/1.png" alt="AI-PPT" width="600" />
 
-  [Watch demo video](https://arcsin1.github.io/ohmyppt.mp4) | [Download release package](https://github.com/arcsin1/oh-my-ppt/releases/)
+  [Download release package](https://git.upapi.cn/njmd/ai-ppt/releases)
 </div>
 
 ---
@@ -88,9 +88,9 @@ Output is pure HTML slides: instant browser preview, no extra software, easy to 
 
 
 <p>
-<img width="30%" alt="Oh My PPT - 9" src="./docs/images/9.png" />
-<img width="30%" alt="Oh My PPT - 10" src="./docs/images/10.png" />
-<img width="30%" alt="Oh My PPT - 11" src="https://arcsin1.github.io/drag.gif" />
+<img width="30%" alt="AI-PPT - 9" src="./docs/images/9.png" />
+<img width="30%" alt="AI-PPT - 10" src="./docs/images/10.png" />
+<img width="30%" alt="AI-PPT - 11" src="./docs/images/8.png" />
 </p>
 
 <a id="workflow"></a>
@@ -109,7 +109,7 @@ If you do not have a document, you can still enter a topic and description direc
 <a id="animations"></a>
 ## 🎬 Animation Support
 
-Oh My PPT generates HTML slides and includes a local **Anime.js v4** runtime. During generation or chat-based editing, the AI can add basic presentation motion to whole slide elements such as titles, metric cards, images, chart containers, and step blocks.
+AI-PPT generates HTML slides and includes a local **Anime.js v4** runtime. During generation or chat-based editing, the AI can add basic presentation motion to whole slide elements such as titles, metric cards, images, chart containers, and step blocks.
 
 Whole-element animation is preferred over splitting text into many tiny moving fragments. It keeps slides readable, stable, and better suited for reports, pitches, classes, and live demos.
 
@@ -122,7 +122,7 @@ The most reliable whole-element animations today are:
 
 Animations are meant to guide attention and show hierarchy. Avoid complex timelines, high-frequency flashing, infinite loops, or large shaking motion. Slides should remain readable even if animation is disabled.
 
-<img src="https://arcsin1.github.io/anime.gif" alt="Oh My PPT animation demo" width="600" />
+<img src="./docs/images/7.png" alt="AI-PPT animation demo" width="600" />
 
 <a id="fonts"></a>
 ## 🔤 Font Management
@@ -157,7 +157,7 @@ Notes:
 
 Images and assets are copied into your local session directory. They are not uploaded to a cloud service by this app.
 
-<img src="./docs/images/5.png" alt="Oh My PPT" width="500" />
+<img src="./docs/images/5.png" alt="AI-PPT" width="500" />
 
 
 <a id="preview"></a>
@@ -165,12 +165,12 @@ Images and assets are copied into your local session directory. They are not upl
 
 Supports keyboard navigation (Left/Right), presentation mode, fullscreen presentation mode, and `ESC` to exit presentation mode.
 
-<img src="./docs/images/2.png" alt="Oh My PPT" width="500" />
+<img src="./docs/images/2.png" alt="AI-PPT" width="500" />
 
 <a id="export"></a>
 ### About export
 
-Oh My PPT currently supports three export modes:
+AI-PPT currently supports three export modes:
 
 - **PDF**: best for sharing, archiving, and printing.
 - **PNG**: batch-export every slide as an image for docs, Notion, articles, or social posts.
@@ -190,7 +190,7 @@ If macOS says the app cannot be opened, is damaged, or cannot verify the develop
 **Option 1: Right-click Open**
 
 1. Open Finder or the Applications folder.
-2. Find `OhMyPPT.app`.
+2. Find `AI-PPT.app`.
 3. Right-click the app and choose **Open**.
 4. Click **Open** again in the confirmation dialog.
 
@@ -201,7 +201,7 @@ This usually only needs to be done once.
 If right-click Open still does not work, run:
 
 ```bash
-xattr -cr /Applications/OhMyPPT.app
+xattr -cr /Applications/AI-PPT.app
 ```
 
 Then open the app again.
@@ -209,7 +209,7 @@ Then open the app again.
 If you placed the app somewhere else, replace the path with the actual location, for example:
 
 ```bash
-xattr -cr ~/Downloads/OhMyPPT.app
+xattr -cr ~/Downloads/AI-PPT.app
 ```
 
 ### Windows
@@ -219,10 +219,10 @@ Unsigned installers may trigger Windows SmartScreen, such as “Windows protecte
 Steps:
 
 1. Click **More info**.
-2. Confirm the app name is `OhMyPPT`.
+2. Confirm the app name is `AI-PPT`.
 3. Click **Run anyway**.
 
-If your browser or antivirus blocks the file, first confirm the installer came from this project’s GitHub Releases page, then choose to keep or allow the file.
+If your browser or antivirus blocks the file, first confirm the installer came from this project’s official Releases page, then choose to keep or allow the file.
 
 > Download builds only from the official Releases page when possible.
 
@@ -243,7 +243,7 @@ I will keep following up and improving the experience.
 <a id="sponsors"></a>
 ## 💖 Sponsors
 
-Special thanks to everyone who has supported this project! Your generosity keeps Oh My PPT alive and growing.
+Special thanks to everyone who has supported this project! Your generosity keeps AI-PPT alive and growing.
 
 See [SponsorsList.md](./SponsorsList.md) for the full list of sponsors.
 
@@ -256,4 +256,4 @@ Thanks to all contributors!
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE) © 2026 arcsin1 &lt;zy19931129@gmail.com&gt;.
+This project is licensed under the [MIT License](LICENSE). Original copyright notices are retained in the license file.

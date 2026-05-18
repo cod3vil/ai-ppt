@@ -280,7 +280,7 @@ export const PreviewIframe = forwardRef<
           : `[data-block-id="${newBlockId}"]`
         try {
           // Pre-generate child block IDs with nanoid (same pattern as host code)
-          const childIds = Array.from({ length: 20 }, () => 'select-arcsin1-' + nanoid(8))
+          const childIds = Array.from({ length: 20 }, () => 'select-ai-ppt-' + nanoid(8))
           wv.executeJavaScript(
             `(function(){` +
             `var __src = document.querySelector(${JSON.stringify(selector)});` +

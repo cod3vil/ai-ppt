@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  // @ohmyppt-index-runtim:arcsin1:v2.0.9
+  // @ai-ppt-index-runtime:njmd:v2.0.9
 
   var pages = JSON.parse(document.getElementById('pages-data')?.textContent || '[]');
   var frameViewport = document.getElementById('frameViewport');
@@ -68,9 +68,9 @@
   function bindFrameKeyboard(frame) {
     try {
       var frameWindow = frame.contentWindow;
-      if (!frameWindow || frame.__ohmypptKeyboardWindow === frameWindow) return;
+      if (!frameWindow || frame.__aipptKeyboardWindow === frameWindow) return;
       frameWindow.addEventListener('keydown', handlePresentationKey);
-      frame.__ohmypptKeyboardWindow = frameWindow;
+      frame.__aipptKeyboardWindow = frameWindow;
     } catch (_) {}
   }
 

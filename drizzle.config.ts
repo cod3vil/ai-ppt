@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "turso",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "./data/ohmyppt.db",
+    url: process.env.DATABASE_URL || "./data/ai-ppt.db",
   },
 });

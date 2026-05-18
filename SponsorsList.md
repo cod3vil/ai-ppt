@@ -2,7 +2,7 @@
 
 Thank you to all our sponsors! Your support keeps this project going and motivates continuous improvement.
 
-特别感谢每一位支持过 Oh My PPT 的朋友！你们的鼓励和赞助是持续迭代的最大动力。
+特别感谢每一位支持过 AI-PPT 的朋友！你们的鼓励和赞助是持续迭代的最大动力。
 
 <a href="https://github.com/zoululll"><img src="https://github.com/zoululll.png" width="50" height="50" alt="zoululll" /></a> <a href="https://github.com/xielinyun123"><img src="https://github.com/xielinyun123.png" width="50" height="50" alt="xielinyun123" /></a>
 

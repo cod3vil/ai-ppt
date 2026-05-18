@@ -2,8 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import type { IpcContext } from '../context'
 
-export const INDEX_RUNTIME_MARKER = '@ohmyppt-index-runtim:arcsin1:v2.0.9'
-export const PPT_RUNTIME_MARKER = '@ohmyppt-ppt-runtime:arcsin1:v1.2.1'
+export const INDEX_RUNTIME_MARKER = '@ai-ppt-index-runtime:njmd:v2.0.9'
+export const PPT_RUNTIME_MARKER = '@ai-ppt-ppt-runtime:njmd:v1.2.1'
 
 export async function ensureSessionRuntimeCompatible(
   ctx: IpcContext,
