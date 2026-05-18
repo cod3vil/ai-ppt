@@ -1,4 +1,4 @@
-appId: cn.upapi.aippt
+appId: com.github.cod3vil.aippt
 productName: AI-PPT
 directories:
   buildResources: build
@@ -91,6 +91,6 @@ appImage:
 npmRebuild: false
 publish:
   provider: generic
-  url: https://git.upapi.cn/njmd/ai-ppt/releases/download/latest
+  url: https://github.com/cod3vil/ai-ppt/releases/download/latest
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

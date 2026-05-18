@@ -22,7 +22,7 @@
 
   <img src="./docs/images/1.png" alt="AI-PPT" width="600" />
 
-  [下载安装包](https://git.upapi.cn/njmd/ai-ppt/releases)
+  [下载安装包](https://github.com/cod3vil/ai-ppt/releases)
 </div>
 
 ---

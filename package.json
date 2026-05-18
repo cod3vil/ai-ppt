@@ -4,7 +4,7 @@
   "description": "AI-PPT - Local-first AI presentation workbench",
   "main": "./out/main/index.js",
   "author": "NJMD",
-  "homepage": "https://git.upapi.cn/njmd/ai-ppt",
+  "homepage": "https://github.com/cod3vil/ai-ppt",
   "license": "MIT",
   "type": "module",
   "scripts": {

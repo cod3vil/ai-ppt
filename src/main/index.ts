@@ -25,8 +25,8 @@ const BASE_MIN_HEIGHT = 680
 const TITLEBAR_HEIGHT = 48
 const TITLEBAR_BACKGROUND = '#f4eddf'
 const TITLEBAR_SYMBOL_COLOR = '#5d6b4d'
-const RELEASE_LATEST_API = 'https://git.upapi.cn/api/v1/repos/njmd/ai-ppt/releases/latest'
-const RELEASES_URL = 'https://git.upapi.cn/njmd/ai-ppt/releases'
+const RELEASE_LATEST_API = 'https://api.github.com/repos/cod3vil/ai-ppt/releases/latest'
+const RELEASES_URL = 'https://github.com/cod3vil/ai-ppt/releases'
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {
@@ -277,7 +277,7 @@ if (gotSingleInstanceLock) {
 
   app.whenReady().then(async () => {
     configureLogging()
-    electronApp.setAppUserModelId('cn.upapi.aippt')
+    electronApp.setAppUserModelId('com.github.cod3vil.aippt')
 
     const dbPath = is.dev ? join(process.cwd(), 'ai-ppt.dev.db') : undefined
     db = new PPTDatabase(dbPath)

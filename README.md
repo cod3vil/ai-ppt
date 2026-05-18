@@ -22,7 +22,7 @@
 
   <img src="./docs/images/1.png" alt="AI-PPT" width="600" />
 
-  [Download release package](https://git.upapi.cn/njmd/ai-ppt/releases)
+  [Download release package](https://github.com/cod3vil/ai-ppt/releases)
 </div>
 
 ---
