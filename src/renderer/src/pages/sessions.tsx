@@ -4,11 +4,13 @@ import { Button } from '../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/Dialog'
-import { FileText, FileUp, FolderOpen, MessageSquare, Pencil, Sparkles, Trash2, X, type LucideIcon } from 'lucide-react'
-import { type Session, useSessionStore } from '../store'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/Tooltip'
+import { FileArchive, FileText, FileUp, FolderOpen, LayoutTemplate, MessageSquare, MessagesSquare, Pencil, Sparkles, Trash2, X, type LucideIcon } from 'lucide-react'
+import { type Session, useSessionStore, useTemplateStore } from '../store'
 import { useToastStore } from '../store'
 import { getEditorGate, parseSessionMetadata } from '../lib/sessionMetadata'
 import { useT } from '../i18n'
+import { SaveTemplateDialog } from '../components/templates/SaveTemplateDialog'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 
@@ -16,34 +18,56 @@ dayjs.extend(duration)
 
 const getSourceTag = (
   session: Session,
-  labels: { pptx: string; document: string; ai: string }
+  labels: { pptx: string; sessionFile: string; document: string; ai: string; thinking: string; template: string }
 ): { label: string; Icon: LucideIcon; className: string } => {
   const metadata = parseSessionMetadata(session.metadata)
   const source = typeof metadata.source === 'string' ? metadata.source : ''
+  if (source === 'template') {
+    return {
+      label: labels.template,
+      Icon: LayoutTemplate,
+      className: 'border-[#e5bec7]/80 bg-[#fff1f4] text-[#80505c]'
+    }
+  }
+  if (source === 'session-file-import' || session.model === 'session-file-import') {
+    return {
+      label: labels.sessionFile,
+      Icon: FileArchive,
+      className: 'border-[#c7c2df]/80 bg-[#f3f0ff] text-[#5d5684]'
+    }
+  }
   if (source === 'pptx-import' || session.provider === 'import' || session.model === 'pptx-import') {
     return {
       label: labels.pptx,
       Icon: FileUp,
-      className: 'border-[#bdd2e6]/80 bg-[#eef6ff] text-[#3e6685]'
+      className: 'border-[#dbeafe]/80 bg-[#eff6ff] text-[var(--color-fg-secondary)]'
+    }
+  }
+  if (source === 'thinking') {
+    return {
+      label: labels.thinking,
+      Icon: MessagesSquare,
+      className: 'border-[#c7d9b7]/80 bg-[#f0f9e4] text-[#4a6b2e]'
     }
   }
   if (session.referenceDocumentPath || session.reference_document_path) {
     return {
       label: labels.document,
       Icon: FileText,
-      className: 'border-[#cbd9b7]/80 bg-[#f3fae9] text-[#526f35]'
+      className: 'border-[var(--color-border-strong)]/80 bg-[var(--color-bg-subtle)] text-[#526f35]'
     }
   }
   return {
     label: labels.ai,
     Icon: Sparkles,
-    className: 'border-[#e1d1b7]/80 bg-[#fff7e8] text-[#7c6a4c]'
+    className: 'border-[var(--color-border-default)]/80 bg-[var(--color-bg-subtle)] text-[var(--color-fg-tertiary)]'
   }
 }
 
 export function SessionsPage(): React.JSX.Element {
   const navigate = useNavigate()
-  const { sessions, fetchSessions, deleteSession, updateSessionTitle } = useSessionStore()
+  const { sessions, fetchSessions, deleteSession, updateSessionTitle, importSessionFile } = useSessionStore()
+  const { createTemplateFromSession } = useTemplateStore()
   const { success, error } = useToastStore()
   const t = useT()
   const [renameSession, setRenameSession] = useState<Session | null>(null)
@@ -51,6 +75,9 @@ export function SessionsPage(): React.JSX.Element {
   const [renaming, setRenaming] = useState(false)
   const [deleteSessionTarget, setDeleteSessionTarget] = useState<Session | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [importingSession, setImportingSession] = useState(false)
+  const [saveTemplateTarget, setSaveTemplateTarget] = useState<Session | null>(null)
+  const [savingTemplate, setSavingTemplate] = useState(false)
 
   useEffect(() => {
     void fetchSessions()
@@ -64,8 +91,13 @@ export function SessionsPage(): React.JSX.Element {
     page_count: number | null
   }): boolean => getEditorGate(session, 0.68).canEdit
 
-  const getSessionRoute = (session: { id: string; status: string; metadata: string | null; page_count: number | null }): string =>
-    canEnterEditor(session) ? `/sessions/${session.id}` : `/sessions/${session.id}/generating`
+  const getSessionRoute = (session: { id: string; status: string; metadata: string | null; page_count: number | null }): string => {
+    if (canEnterEditor(session)) return `/sessions/${session.id}`
+    const metadata = parseSessionMetadata(session.metadata)
+    return metadata.source === 'template'
+      ? `/sessions/${session.id}/template-generating`
+      : `/sessions/${session.id}/generating`
+  }
 
   const openRenameDialog = (session: Session): void => {
     setRenameSession(session)
@@ -125,15 +157,76 @@ export function SessionsPage(): React.JSX.Element {
     }
   }
 
+  const handleImportSessionFile = async (): Promise<void> => {
+    setImportingSession(true)
+    try {
+      const result = await importSessionFile()
+      if (result.cancelled) return
+      success(t('sessions.importDone'), {
+        description: t('sessions.importedDescription', {
+          title: result.title || t('sessions.importedFallbackTitle'),
+          pageCount: result.pageCount || 0
+        })
+      })
+    } catch (err) {
+      error(t('sessions.importFailed'), {
+        description: err instanceof Error ? err.message : t('common.retryLater')
+      })
+    } finally {
+      setImportingSession(false)
+    }
+  }
+
+  const handleSaveTemplate = async (payload: {
+    name: string
+    description: string
+    tags: string[]
+  }): Promise<void> => {
+    if (!saveTemplateTarget || savingTemplate) return
+    setSavingTemplate(true)
+    try {
+      await createTemplateFromSession({
+        sessionId: saveTemplateTarget.id,
+        ...payload
+      })
+      success('已保存为模板', {
+        action: {
+          label: '查看模板',
+          onClick: () => navigate('/templates')
+        }
+      })
+      setSaveTemplateTarget(null)
+    } catch (err) {
+      error('保存模板失败', {
+        description: err instanceof Error ? err.message : t('common.retryLater')
+      })
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{t('sessions.eyebrow')}</p>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="organic-serif text-[32px] font-semibold leading-none text-[#3e4a32]">{t('sessions.title')}</h1>
+            <h1 className="my-style-h1-spaceholder text-[32px] font-semibold leading-none text-[var(--color-fg-default)]">{t('sessions.title')}</h1>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+            <TooltipProvider delayDuration={180}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" variant="outline" className="min-w-[132px]" onClick={() => void handleImportSessionFile()} disabled={importingSession}>
+                    <FileArchive className="mr-2 h-4 w-4" />
+                    {importingSession ? t('sessions.importing') : t('sessions.importSessionFile')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="end" className="whitespace-pre-line">
+                  {t('sessions.importSessionFileTooltip')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button size="sm" className="min-w-[112px]" onClick={() => navigate('/')}>
               <FolderOpen className="mr-2 h-4 w-4" />
               {t('sessions.newSession')}
@@ -173,17 +266,20 @@ export function SessionsPage(): React.JSX.Element {
                 : t('sessions.actionRegenerate')
             const sourceTag = getSourceTag(session, {
               pptx: t('sessions.sourcePptx'),
+              sessionFile: t('sessions.sourceSessionFile'),
               document: t('sessions.sourceDocument'),
-              ai: t('sessions.sourceAi')
+              ai: t('sessions.sourceAi'),
+              thinking: t('sessions.sourceThinking'),
+              template: t('sessions.sourceTemplate')
             })
             const SourceIcon = sourceTag.Icon
             const statusClassName = isFullyComplete
-              ? 'border-[#bad8b7]/80 bg-[#eef9ec] text-[#4a7a46]'
+              ? 'border-[var(--color-brand-subtle-hover)]/80 bg-[var(--color-brand-subtle)] text-[var(--color-fg-secondary)]'
               : isPartialComplete
-                ? 'border-[#b5c9a8]/80 bg-[#eef5e8] text-[#4f7b3f]'
+                ? 'border-[var(--color-border-strong)]/80 bg-[var(--color-bg-subtle)] text-[var(--color-brand)]'
                 : isContinuable
-                  ? 'border-[#d6c08d]/80 bg-[#fff3cf] text-[#7a5a19] shadow-[0_0_0_1px_rgba(214,192,141,0.14)]'
-                  : 'border-[#d7b5ae]/70 bg-[#fbf1ee] text-[#93564f]'
+                  ? 'border-[#fed7aa]/80 bg-[#fff7ed] text-[#92400e] shadow-[0_0_0_1px_rgba(214,192,141,0.14)]'
+                  : 'border-[#fecaca]/70 bg-[#fef2f2] text-[var(--color-danger)]'
             return (
               <Card
                 key={session.id}
@@ -206,6 +302,33 @@ export function SessionsPage(): React.JSX.Element {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    <TooltipProvider delayDuration={180}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="inline-flex"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={editorGate.generatedCount <= 0}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setSaveTemplateTarget(session)
+                              }}
+                            >
+                              <LayoutTemplate className="h-4 w-4" />
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="end">
+                          {editorGate.generatedCount <= 0
+                            ? '至少生成 1 页后才能保存为模板'
+                            : '保存为模板'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -232,11 +355,11 @@ export function SessionsPage(): React.JSX.Element {
                     <SourceIcon className="h-3 w-3" />
                     {sourceTag.label}
                   </span>
-                  <span className="rounded-lg border border-[#e1d1b7]/80 bg-[#fff7e8]/75 px-2 py-1 text-[#7c6a4c]">
+                  <span className="rounded-lg border border-[var(--color-border-default)]/80 bg-[var(--color-bg-subtle)]/75 px-2 py-1 text-[var(--color-fg-tertiary)]">
                     {t('sessions.pagesCount', { generated: editorGate.generatedCount, total: editorGate.totalCount })}
                   </span>
                   {session.generation_duration_sec ? (
-                    <span className="rounded-lg border border-[#d5cfc5]/60 bg-[#f9f6f1] px-2 py-1 text-[#6b6560]">
+                    <span className="rounded-lg border border-[var(--color-border-default)]/60 bg-[var(--color-bg-muted)] px-2 py-1 text-[var(--color-fg-tertiary)]">
                       {(() => {
                         const d = dayjs.duration(session.generation_duration_sec!, 'second')
                         const m = Math.floor(d.asMinutes())
@@ -245,11 +368,11 @@ export function SessionsPage(): React.JSX.Element {
                       })()}
                     </span>
                   ) : null}
-                  <span className="rounded-lg border border-[#d5cfc5]/60 bg-[#f9f6f1] px-2 py-1 text-[#6b6560]">
+                  <span className="rounded-lg border border-[var(--color-border-default)]/60 bg-[var(--color-bg-muted)] px-2 py-1 text-[var(--color-fg-tertiary)]">
                     {dayjs.unix(session.updated_at).format('YYYY/MM/DD HH:mm')}
                   </span>
                   {!isFullyComplete && editorGate.failedCount > 0 && (
-                    <span className="rounded-lg border border-[#d7b5ae]/70 bg-[#fff7f2]/80 px-2 py-1 text-[#93564f]">
+                    <span className="rounded-lg border border-[#fecaca]/70 bg-[#fff7f2]/80 px-2 py-1 text-[var(--color-danger)]">
                       {t('sessions.failedCount', { count: editorGate.failedCount })}
                     </span>
                   )}
@@ -266,12 +389,12 @@ export function SessionsPage(): React.JSX.Element {
           onClick={closeRenameDialog}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-[#d8cfbc]/80 bg-[#fffaf0] p-5 shadow-[0_24px_60px_rgba(64,52,38,0.28)]"
+            className="w-full max-w-md rounded-xl border border-[var(--color-border-default)]/80 bg-[#ffffff] p-5 shadow-[0_24px_60px_rgba(16,24,40,0.12)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold text-[#3e4a32]">{t('sessions.editTitle')}</h2>
+                <h2 className="text-base font-semibold text-[var(--color-fg-default)]">{t('sessions.editTitle')}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t('sessions.renameDescription')}
                 </p>
@@ -324,6 +447,13 @@ export function SessionsPage(): React.JSX.Element {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <SaveTemplateDialog
+        open={Boolean(saveTemplateTarget)}
+        defaultName={saveTemplateTarget?.title || ''}
+        saving={savingTemplate}
+        onOpenChange={(open) => !open && setSaveTemplateTarget(null)}
+        onSubmit={(payload) => void handleSaveTemplate(payload)}
+      />
     </div>
   )
 }

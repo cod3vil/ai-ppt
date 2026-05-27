@@ -4,14 +4,14 @@ export const FREEZE_PAGE_FOR_EXPORT_SCRIPT = `
     document.querySelector('.ppt-page-root[data-ppt-guard-root="1"]') ||
     document.querySelector('.ppt-page-root') ||
     document.body;
-  const existing = document.getElementById('aippt-export-freeze-page');
+  const existing = document.getElementById('ohmyppt-export-freeze-page');
   if (existing) existing.remove();
   const style = document.createElement('style');
-  style.id = 'aippt-export-freeze-page';
+  style.id = 'ohmyppt-export-freeze-page';
   style.textContent = [
     'html { scroll-behavior: auto !important; }',
     '*, *::before, *::after { animation: none !important; transition: none !important; animation-delay: 0s !important; animation-duration: 0s !important; animation-play-state: paused !important; transition-delay: 0s !important; transition-duration: 0s !important; }',
-    '.opacity-0, [data-anime], [data-animate] { opacity: 1 !important; transform: none !important; }'
+    '.opacity-0, [data-anime], [data-animate], [data-anim] { opacity: 1 !important; transform: none !important; }'
   ].join('\\n');
   document.head.appendChild(style);
 
@@ -186,9 +186,14 @@ export const FREEZE_PAGE_FOR_EXPORT_SCRIPT = `
   await stabilizeCharts();
 
   const shouldForceVisibleForMotion = (node) => {
-    if (!node?.matches?.('.opacity-0, [data-anime], [data-animate]')) return false;
+    if (!node?.matches?.('.opacity-0, [data-anime], [data-animate], [data-anim]')) return false;
     return Number(getComputedStyle(node).opacity || '1') <= 0.04;
   };
+
+  // Mark [data-anim] elements as animated for PPTX background capture
+  root.querySelectorAll('[data-anim]').forEach(function (el) {
+    el.setAttribute('data-pptx-animated', '1');
+  });
 
   const motionTargets = root.querySelectorAll(
     '.opacity-0, [data-anime], [data-animate], h1, h2, h3, p, li, .card, .panel, .text-section, .diagram-section, .timeline-node, section, section > *'
@@ -253,7 +258,7 @@ export const RESET_SCALE_FOR_PPTX_CAPTURE_SCRIPT = `
 
 export const HIDE_TEXT_FOR_PPTX_BACKGROUND_SCRIPT = `
 (async () => {
-  const existing = document.getElementById('aippt-pptx-hide-text');
+  const existing = document.getElementById('ohmyppt-pptx-hide-text');
   if (existing) existing.remove();
   const isVisibleColor = (value) => {
     const color = String(value || '').trim().toLowerCase();
@@ -269,7 +274,7 @@ export const HIDE_TEXT_FOR_PPTX_BACKGROUND_SCRIPT = `
     return '#111827';
   };
   const style = document.createElement('style');
-  style.id = 'aippt-pptx-hide-text';
+  style.id = 'ohmyppt-pptx-hide-text';
   style.textContent = [
     'body :not(.katex):not(.katex *):not(canvas) { -webkit-text-fill-color: transparent !important; -webkit-text-stroke-color: transparent !important; text-shadow: none !important; text-decoration-color: transparent !important; caret-color: transparent !important; }',
     'body :not(.katex):not(.katex *)::before, body :not(.katex):not(.katex *)::after { -webkit-text-fill-color: transparent !important; -webkit-text-stroke-color: transparent !important; text-shadow: none !important; text-decoration-color: transparent !important; }',
@@ -368,12 +373,12 @@ export const HIDE_FOR_PPTX_BACKGROUND_SCRIPT = `
   });
 
   // 2. Remove previous style
-  const existing = document.getElementById('aippt-pptx-hide-elements');
+  const existing = document.getElementById('ohmyppt-pptx-hide-elements');
   if (existing) existing.remove();
 
   // 3. CSS: keep [data-pptx-animated] and SVGs visible, hide text + non-animated shapes/images
   const style = document.createElement('style');
-  style.id = 'aippt-pptx-hide-elements';
+  style.id = 'ohmyppt-pptx-hide-elements';
   style.textContent = [
     // Precisely hide extracted shapes (background/border) and images (visibility)
     '[data-pptx-extracted-shape] { background-color: transparent !important; border-color: transparent !important; }',
@@ -403,10 +408,10 @@ export const HIDE_FOR_PPTX_BACKGROUND_SCRIPT = `
 
 export const HIDE_ELEMENTS_FOR_PPTX_BACKGROUND_SCRIPT = `
 (async () => {
-  let existing = document.getElementById('aippt-pptx-hide-elements');
+  let existing = document.getElementById('ohmyppt-pptx-hide-elements');
   if (existing) existing.remove();
   const style = document.createElement('style');
-  style.id = 'aippt-pptx-hide-elements';
+  style.id = 'ohmyppt-pptx-hide-elements';
   style.textContent = [
     'img, canvas { opacity: 0 !important; visibility: hidden !important; }',
     'svg { opacity: 0 !important; visibility: hidden !important; }',

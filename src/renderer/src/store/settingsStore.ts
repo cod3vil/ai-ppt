@@ -21,7 +21,7 @@ interface SettingsStore {
   upsertModelConfig: (config: {
     id?: string
     name: string
-    provider: 'anthropic' | 'openai'
+    provider: 'anthropic' | 'openai' | 'google'
     model: string
     apiKey: string
     baseUrl: string
@@ -44,7 +44,7 @@ interface SettingsStore {
 
 const readStoredLocale = (): 'zh' | 'en' => {
   if (typeof window === 'undefined') return 'zh'
-  return window.localStorage.getItem('ai-ppt:lang') === 'en' ? 'en' : 'zh'
+  return window.localStorage.getItem('oh-my-ppt:lang') === 'en' ? 'en' : 'zh'
 }
 
 const fallbackMessage = (zh: string, en: string): string => (readStoredLocale() === 'en' ? en : zh)

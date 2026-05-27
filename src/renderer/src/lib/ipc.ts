@@ -53,8 +53,10 @@ export interface StyleDetail {
 
 export interface StyleListItem {
   id: string
+  styleKey?: string
   label: string
   description: string
+  aliases?: string[]
   category: string
   source?: 'builtin' | 'custom' | 'override'
   editable?: boolean
@@ -92,6 +94,33 @@ export interface ExportDeckResult {
   path?: string
   warnings?: string[]
   pageCount?: number
+}
+
+export interface ImportSessionFileResult {
+  success: boolean
+  cancelled?: boolean
+  sessionId?: string
+  title?: string
+  pageCount?: number
+  warnings?: string[]
+}
+
+export interface TemplateListItem {
+  id: string
+  name: string
+  description: string
+  source: 'user'
+  pageCount: number
+  tags: string[]
+  previewHtmlPath: string | null
+  previewPages: Array<{
+    pageNumber: number
+    pageId: string
+    title: string
+    htmlPath: string
+  }>
+  createdAt: number
+  updatedAt: number
 }
 
 export interface EnsureElementAnchorPayload {
@@ -162,7 +191,7 @@ export interface CreateSessionPayload {
 export interface ModelConfig {
   id: string
   name: string
-  provider: 'anthropic' | 'openai'
+  provider: 'anthropic' | 'openai' | 'google'
   model: string
   apiKey: string
   baseUrl: string
@@ -276,6 +305,43 @@ export const ipc = {
       }>
       selectedPageId: string | null
     }>,
+  createBlankSessionPage: (payload: {
+    sessionId: string
+    sourcePageId: string
+  }) =>
+    getIpc().invoke('session:createBlankPage', payload) as Promise<{
+      ok: boolean
+      generatedPages: Array<{
+        id: string
+        pageNumber: number
+        pageId: string
+        title: string
+        html: string
+        htmlPath?: string
+        status?: string
+        error?: string | null
+      }>
+      selectedPageId: string | null
+    }>,
+  updateSessionPageTitle: (payload: {
+    sessionId: string
+    pageId: string
+    title: string
+  }) =>
+    getIpc().invoke('session:updatePageTitle', payload) as Promise<{
+      ok: boolean
+      generatedPages: Array<{
+        id: string
+        pageNumber: number
+        pageId: string
+        title: string
+        html: string
+        htmlPath?: string
+        status?: string
+        error?: string | null
+      }>
+      selectedPageId: string | null
+    }>,
   getSessionMessages: (payload: {
     sessionId: string
     chatType: 'main' | 'page'
@@ -285,8 +351,71 @@ export const ipc = {
     getIpc().invoke('session:delete', sessionId) as Promise<{ success: boolean }>,
   updateSessionTitle: (payload: { sessionId: string; title: string }) =>
     getIpc().invoke('session:updateTitle', payload) as Promise<{ ok: boolean }>,
+  importSessionFile: () =>
+    getIpc().invoke('session:importFile') as Promise<ImportSessionFileResult>,
+  listTemplates: () =>
+    getIpc().invoke('templates:list') as Promise<{ items: TemplateListItem[] }>,
+  createTemplateFromSession: (payload: {
+    sessionId: string
+    name?: string
+    description?: string
+    tags?: string[]
+  }) =>
+    getIpc().invoke('templates:createFromSession', payload) as Promise<{
+      success: true
+      id: string
+    }>,
+  createSessionFromTemplate: (payload: {
+    templateId: string
+    title?: string
+    pageCount?: number
+    referenceDocumentPath?: string
+  }) =>
+    getIpc().invoke('templates:createSession', payload) as Promise<{
+      success: true
+      sessionId: string
+    }>,
+  createEditableSessionFromTemplate: (payload: {
+    templateId: string
+    title?: string
+  }) =>
+    getIpc().invoke('templates:createEditableSession', payload) as Promise<{
+      success: true
+      sessionId: string
+    }>,
+  importPptxAsTemplate: (payload: {
+    filePath: string
+    name?: string
+  }) =>
+    getIpc().invoke('templates:importPptx', payload) as Promise<{
+      success: true
+      id: string
+      pageCount: number
+      warnings: string[]
+    }>,
+  updateTemplateMetadata: (payload: {
+    templateId: string
+    name: string
+    description?: string
+    tags?: string[]
+  }) =>
+    getIpc().invoke('templates:updateMetadata', payload) as Promise<{
+      success: true
+      item: TemplateListItem
+    }>,
+  deleteTemplate: (templateId: string) =>
+    getIpc().invoke('templates:delete', templateId) as Promise<{
+      success: true
+      deleted: boolean
+    }>,
   startGenerate: (payload: GenerateStartPayload) =>
     getIpc().invoke('generate:start', payload) as Promise<{
+      success: boolean
+      runId?: string
+      alreadyRunning?: boolean
+    }>,
+  startTemplateGenerate: (payload: GenerateStartPayload & { retry?: boolean }) =>
+    getIpc().invoke('generate:startTemplate', payload) as Promise<{
       success: boolean
       runId?: string
       alreadyRunning?: boolean
@@ -349,6 +478,8 @@ export const ipc = {
     getIpc().invoke('export:pptx', { sessionId, ...options }) as Promise<ExportDeckResult>,
   exportSlidePack: (sessionId: string) =>
     getIpc().invoke('export:slidePack', { sessionId }) as Promise<ExportDeckResult>,
+  exportSessionZip: (sessionId: string) =>
+    getIpc().invoke('export:sessionZip', { sessionId }) as Promise<ExportDeckResult>,
   getSettings: () => getIpc().invoke('settings:get') as Promise<Record<string, unknown>>,
   listModelConfigs: () => getIpc().invoke('settings:listModelConfigs') as Promise<ModelConfig[]>,
   validateUploadPrerequisites: () =>
@@ -374,7 +505,7 @@ export const ipc = {
   upsertModelConfig: (payload: {
     id?: string
     name: string
-    provider: 'anthropic' | 'openai'
+    provider: 'anthropic' | 'openai' | 'google'
     model: string
     apiKey: string
     baseUrl: string
@@ -497,6 +628,7 @@ export const ipc = {
     pageId: string
     dragEdits: unknown[]
     textEdits: unknown[]
+    propertyEdits?: unknown[]
     deletes?: unknown[]
     addElements?: unknown[]
     prompt?: string
@@ -505,8 +637,10 @@ export const ipc = {
       success: boolean
       dragCount: number
       textCount: number
+      propertyCount?: number
       deleteCount: number
       addCount: number
+      warnings?: string[]
     }>,
   openFile: (filePath: string, sessionId?: string) =>
     getIpc().invoke('file:open', { path: filePath, sessionId }) as Promise<string>,
@@ -526,6 +660,15 @@ export const ipc = {
   },
   onPptxImportProgress: (callback: (payload: PptxImportProgressPayload) => void): (() => void) => {
     const channel = 'pptx:import:progress'
+    const handler = (_event: unknown, payload: unknown): void =>
+      callback(payload as PptxImportProgressPayload)
+    getIpc().on(channel, handler)
+    return () => getIpc().removeListener(channel, handler)
+  },
+  onTemplatePptxImportProgress: (
+    callback: (payload: PptxImportProgressPayload) => void
+  ): (() => void) => {
+    const channel = 'templates:importPptx:progress'
     const handler = (_event: unknown, payload: unknown): void =>
       callback(payload as PptxImportProgressPayload)
     getIpc().on(channel, handler)

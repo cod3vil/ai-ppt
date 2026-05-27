@@ -1,10 +1,12 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
 import log from 'electron-log/main.js'
-import { join } from 'path'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 
 let tray: Tray | null = null
 let hasShownHideBalloon = false
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 function resolveTrayIconPaths(): string[] {
   const iconPaths: string[] = []
@@ -77,7 +79,7 @@ export function createTray(mainWindow: BrowserWindow | null): boolean {
     })
     return false
   }
-  tray.setToolTip('AI-PPT')
+  tray.setToolTip('Oh My PPT')
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -111,8 +113,8 @@ export function showTrayHideBalloon(): void {
   if (process.platform !== 'win32' || !tray || tray.isDestroyed() || hasShownHideBalloon) return
   hasShownHideBalloon = true
   tray.displayBalloon({
-    title: 'AI-PPT 已最小化到托盘',
-    content: '点击通知区域中的 AI-PPT 图标可恢复窗口。',
+    title: 'Oh My PPT 已最小化到托盘',
+    content: '点击通知区域中的 Oh My PPT 图标可恢复窗口。',
     iconType: 'info',
     largeIcon: false,
     noSound: true

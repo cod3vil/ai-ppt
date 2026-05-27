@@ -240,9 +240,6 @@ export class PPTDatabase {
 
   constructor(dbPath?: string) {
     const defaultPath = is.dev
-      ? path.join(process.cwd(), 'ai-ppt.dev.db')
-      : path.join(app.getPath('userData'), 'ai-ppt.db')
-    const legacyPath = is.dev
       ? path.join(process.cwd(), 'ohmyppt.dev.db')
       : path.join(app.getPath('userData'), 'ohmyppt.db')
     const resolvedPath = dbPath || defaultPath
@@ -250,9 +247,6 @@ export class PPTDatabase {
     const dir = path.dirname(resolvedPath)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
-    }
-    if (!fs.existsSync(resolvedPath) && fs.existsSync(legacyPath)) {
-      fs.copyFileSync(legacyPath, resolvedPath)
     }
 
     const url = resolvedPath.startsWith('file:') ? resolvedPath : `file:${resolvedPath}`

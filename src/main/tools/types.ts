@@ -38,6 +38,8 @@ export type DeckEditScope = "page" | "deck" | "presentation-container";
 export interface SessionDeckGenerationContext {
   mode?: "generate" | "edit" | "retry";
   editScope?: DeckEditScope;
+  provider?: string;
+  model?: string;
   sessionId: string;
   projectDir: string;
   indexPath: string;
@@ -54,6 +56,8 @@ export interface SessionDeckGenerationContext {
   outlineItems: OutlineItem[];
   sourceDocumentPaths?: string[];
   designContract?: DesignContract;
+  /** Template generation must inspect the copied template page before rewriting it. */
+  templatePageReadRequired?: boolean;
   // Edit-mode fields (filled when mode=edit)
   selectedPageId?: string;
   selectedPageNumber?: number;

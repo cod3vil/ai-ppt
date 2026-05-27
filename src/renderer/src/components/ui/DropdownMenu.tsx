@@ -14,7 +14,8 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 min-w-[9rem] overflow-hidden rounded-lg border border-[#d8ccb5]/85 bg-[#fff9ef] p-1 text-foreground shadow-[0_12px_28px_rgba(88,72,54,0.18)]',
+        'z-50 min-w-[9rem] overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-white p-1 text-[var(--color-fg-default)] shadow-[var(--elevation-popover)]',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className
       )}
       {...props}
@@ -30,11 +31,12 @@ export const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center gap-2 rounded-md px-2.5 py-2 text-sm outline-none transition-colors focus:bg-[#efe5d3]/75 data-[disabled]:pointer-events-none data-[disabled]:opacity-45',
+      'relative flex cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--color-fg-default)] outline-none transition-colors',
+      'focus:bg-[var(--color-bg-muted)]',
+      'data-[disabled]:pointer-events-none data-[disabled]:opacity-45',
       className
     )}
     {...props}
   />
 ))
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
-

@@ -8,6 +8,7 @@ import type {
 import type { PreviewIframeHandle } from '../components/preview/PreviewIframe'
 import { TooltipProvider } from '../components/ui/Tooltip'
 import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 import {
   Dialog,
   DialogContent,
@@ -27,32 +28,72 @@ import {
 import { MessagePanel } from '../components/session-detail/MessagePanel'
 import { PageSidebar } from '../components/session-detail/PageSidebar'
 import { PreviewStage } from '../components/session-detail/PreviewStage'
+import { PreviewToolbar } from '../components/session-detail/PreviewToolbar'
 import { ElementInspectorPanel } from '../components/session-detail/ElementInspectorPanel'
 import { SessionToolbar } from '../components/session-detail/SessionToolbar'
 import { AssetPickerDialog } from '../components/session-detail/AssetPickerDialog'
+import { SaveTemplateDialog } from '../components/templates/SaveTemplateDialog'
 import type { ElementEditDraft } from '../components/session-detail/ElementInspectorPanel'
 import type { ChatType, SessionPreviewPage } from '../components/session-detail/types'
-import { useSessionStore, useGenerateStore } from '../store'
+import { useSessionStore, useGenerateStore, useTemplateStore } from '../store'
 import { useSessionDetailUiStore } from '../store/sessionDetailStore'
 import { useEditHistoryStore } from '../store/editHistoryStore'
 import type { GenerateChunkEvent } from '@shared/generation.js'
 import type { HistoryVersion } from '@shared/history.js'
 import { useToastStore } from '../store'
-import { getEditorGate } from '../lib/sessionMetadata'
+import { getEditorGate, parseSessionMetadata } from '../lib/sessionMetadata'
 import { useT } from '../i18n'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 
 const EMPTY_ELEMENT_DRAFT: ElementEditDraft = {
   text: '',
-  color: '#34402c',
+  color: 'var(--color-fg-default)',
   fontSize: '',
   fontWeight: '400',
   layoutX: '',
   layoutY: '',
   layoutWidth: '',
   layoutHeight: '',
-  layoutZIndex: ''
+  layoutZIndex: '',
+  opacity: '1',
+  backgroundColor: '#ffffff',
+  objectFit: 'contain',
+  alt: '',
+  poster: '',
+  controls: false,
+  muted: false,
+  loop: false,
+  autoplay: false,
+  playsInline: true,
+  preload: 'metadata'
+}
+
+type ElementPropertyStylePatch = {
+  zIndex?: number
+  opacity?: number
+  backgroundColor?: string
+  color?: string
+  fontSize?: string
+  fontWeight?: string
+  objectFit?: string
+}
+
+type ElementPropertyAttrsPatch = {
+  alt?: string
+  poster?: string
+  controls?: boolean
+  muted?: boolean
+  loop?: boolean
+  autoplay?: boolean
+  playsInline?: boolean
+  preload?: string
+}
+
+type ElementPropertyPatch = {
+  text?: string
+  style?: ElementPropertyStylePatch
+  attrs?: ElementPropertyAttrsPatch
 }
 
 function normalizePagesForSelection(
@@ -84,7 +125,7 @@ function rgbToHex(value: string | undefined): string {
   const text = String(value || '').trim()
   if (/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return text
   const match = text.match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i)
-  if (!match) return '#34402c'
+  if (!match) return 'var(--color-fg-default)'
   const toHex = (part: string): string =>
     Math.max(0, Math.min(255, Number(part) || 0))
       .toString(16)
@@ -103,6 +144,11 @@ function normalizeFontWeight(value: string | undefined): string {
   return String(Math.max(300, Math.min(800, Math.round(parsed / 100) * 100)))
 }
 
+function opacityToInput(value: string | undefined): string {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? String(Math.max(0, Math.min(1, parsed))) : '1'
+}
+
 export function SessionDetailPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -116,6 +162,7 @@ export function SessionDetailPage(): React.JSX.Element {
     setMessages,
     addMessage
   } = useSessionStore()
+  const { createTemplateFromSession } = useTemplateStore()
   const { isGenerating, updateProgress, cancelGeneration, progress, currentPages, error } =
     useGenerateStore()
   const chatType = useSessionDetailUiStore((state) => state.chatType)
@@ -149,9 +196,15 @@ export function SessionDetailPage(): React.JSX.Element {
   const [deleteConfirmPage, setDeleteConfirmPage] = useState<SessionPreviewPage | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [pendingDeleteSelector, setPendingDeleteSelector] = useState<string | null>(null)
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
   const previewIframeRef = useRef<PreviewIframeHandle | null>(null)
   const sendingMessageRef = useRef(false)
   const [addPageInput, setAddPageInput] = useState('')
+  const [blankPageDialogOpen, setBlankPageDialogOpen] = useState(false)
+  const [blankPageSourceId, setBlankPageSourceId] = useState<string>('')
+  const [titleEditPage, setTitleEditPage] = useState<SessionPreviewPage | null>(null)
+  const [titleEditDraft, setTitleEditDraft] = useState('')
   const {
     success: toastSuccess,
     error: toastError,
@@ -279,7 +332,13 @@ export function SessionDetailPage(): React.JSX.Element {
     )
       return
     if (!canEditInSessionDetail) {
-      navigate(`/sessions/${id}/generating`, { replace: true })
+      const metadata = parseSessionMetadata(currentSession.metadata)
+      navigate(
+        metadata.source === 'template'
+          ? `/sessions/${id}/template-generating`
+          : `/sessions/${id}/generating`,
+        { replace: true }
+      )
     }
   }, [canEditInSessionDetail, currentSession, id, navigate])
 
@@ -613,6 +672,11 @@ export function SessionDetailPage(): React.JSX.Element {
     setAddPageDialogOpen(true)
   }
 
+  const handleOpenBlankPageDialog = (): void => {
+    setBlankPageSourceId(selectedPage?.id || normalizedOrderedPages[0]?.id || '')
+    setBlankPageDialogOpen(true)
+  }
+
   const handleRetryFailedPage = async (page: SessionPreviewPage): Promise<void> => {
     if (!id || !page.id) return
     useSessionDetailUiStore.getState().setIsRetryingSinglePage(true)
@@ -667,8 +731,37 @@ export function SessionDetailPage(): React.JSX.Element {
         latestPages[Math.min(insertAfter, Math.max(latestPages.length - 1, 0))] ||
         latestPages[latestPages.length - 1]
       targetSelection = (addedPage || fallbackPage)?.id ?? null
+      // Only clear script on success — a new page invalidates the existing script
     } catch (err) {
       const message = err instanceof Error ? err.message : t('sessionDetail.addPageFailed')
+      toastError(message)
+    } finally {
+      useSessionDetailUiStore.getState().finishAddPage(targetSelection)
+      useGenerateStore.getState().finishGeneration()
+    }
+  }
+
+  const handleCreateBlankPage = async (): Promise<void> => {
+    if (!id || !blankPageSourceId) return
+    const sourcePage = normalizedOrderedPages.find((page) => page.id === blankPageSourceId)
+    if (!sourcePage) return
+    setBlankPageDialogOpen(false)
+    setIsAddingPage(true)
+    useGenerateStore.setState({ isGenerating: true, error: null, status: 'running' })
+    let targetSelection: string | null | undefined = undefined
+
+    try {
+      const result = await ipc.createBlankSessionPage({
+        sessionId: id,
+        sourcePageId: sourcePage.id
+      })
+      useGenerateStore.getState().setPages(result.generatedPages)
+      await loadSession(id)
+      useGenerateStore.getState().setPages(useSessionStore.getState().currentGeneratedPages)
+      targetSelection = result.selectedPageId || null
+      useSessionDetailUiStore.getState().bumpPreviewKey()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('sessionDetail.addBlankPageFailed')
       toastError(message)
     } finally {
       useSessionDetailUiStore.getState().finishAddPage(targetSelection)
@@ -700,6 +793,40 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleDeletePage = async (page: SessionPreviewPage): Promise<void> => {
     setDeleteConfirmPage(page)
+  }
+
+  const handleOpenTitleEditDialog = (page: SessionPreviewPage): void => {
+    setTitleEditPage(page)
+    setTitleEditDraft(page.title || '')
+  }
+
+  const handleSavePageTitle = async (): Promise<void> => {
+    if (!id || !titleEditPage) return
+    const title = titleEditDraft.replace(/\s+/g, ' ').trim()
+    if (!title) {
+      toastError(t('pageManagement.pageTitleRequired'))
+      return
+    }
+    if (title === titleEditPage.title) {
+      setTitleEditPage(null)
+      return
+    }
+    useSessionDetailUiStore.getState().setIsManagingPages(true)
+    try {
+      const result = await ipc.updateSessionPageTitle({
+        sessionId: id,
+        pageId: titleEditPage.id,
+        title
+      })
+      useGenerateStore.getState().setPages(result.generatedPages)
+      useSessionDetailUiStore.getState().setSelectedPageId(result.selectedPageId || titleEditPage.id)
+      useSessionDetailUiStore.getState().bumpPreviewKey()
+      setTitleEditPage(null)
+    } catch (error) {
+      toastError(error instanceof Error ? error.message : t('pageManagement.updateTitleFailed'))
+    } finally {
+      useSessionDetailUiStore.getState().setIsManagingPages(false)
+    }
   }
 
   const handleConfirmDeletePage = async (): Promise<void> => {
@@ -762,6 +889,7 @@ export function SessionDetailPage(): React.JSX.Element {
     const pageHash = selectedPage?.id || normalizedOrderedPages[0]?.id
     await ipc.openInBrowser(indexPath, pageHash ? `#${pageHash}` : undefined, id || undefined)
   }
+
 
   const handleExportPdf = async (): Promise<void> => {
     const detailState = useSessionDetailUiStore.getState()
@@ -902,18 +1030,48 @@ export function SessionDetailPage(): React.JSX.Element {
     }
   }
 
+  const handleExportSessionZip = async (): Promise<void> => {
+    const detailState = useSessionDetailUiStore.getState()
+    if (!id || detailState.isExportingSessionZip) return
+    detailState.setIsExportingSessionZip(true)
+    toastInfo(t('sessionDetail.sessionZipPreparing'), {
+      description: t('sessionDetail.sessionZipPreparingDescription'),
+      duration: 4000
+    })
+    try {
+      const result = await ipc.exportSessionZip(id)
+      if (result.cancelled) {
+        toastInfo(t('sessionDetail.exportCancelled'))
+        return
+      }
+      if (!result.success || !result.path) {
+        toastError(t('sessionDetail.exportFailed'))
+        return
+      }
+      toastSuccess(t('sessionDetail.sessionZipExported'), {
+        description: t('sessionDetail.sessionZipExportedDescription')
+      })
+    } catch (error) {
+      toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
+    } finally {
+      useSessionDetailUiStore.getState().setIsExportingSessionZip(false)
+    }
+  }
+
   const handleElementMoved = (payload: EditModeMovePayload): void => {
     if (!id || !selectedPage?.htmlPath || !selectedPage.pageId) return
 
     // Sync inspector panel layout fields when the selected element is dragged
     // payload.x/y are translate offsets (--ppt-drag-x/y), convert to visual position for display
     if (textSelection && payload.selector === textSelection.selector) {
-      const originalCSSX =
-        (textSelection.bounds?.x ?? 0) - (textSelection.translateX ?? 0)
-      const originalCSSY =
-        (textSelection.bounds?.y ?? 0) - (textSelection.translateY ?? 0)
-      const visualX = originalCSSX + payload.x
-      const visualY = originalCSSY + payload.y
+      const visualX =
+        payload.visualX ??
+        ((textSelection.pageBounds?.x ?? textSelection.bounds?.x ?? 0) +
+          (payload.layoutMode === 'translate' ? payload.x : payload.deltaX))
+      const visualY =
+        payload.visualY ??
+        ((textSelection.pageBounds?.y ?? textSelection.bounds?.y ?? 0) +
+          (payload.layoutMode === 'translate' ? payload.y : payload.deltaY))
       setTextDraft((prev) => ({
         ...prev,
         layoutX: String(Math.round(visualX)),
@@ -932,7 +1090,7 @@ export function SessionDetailPage(): React.JSX.Element {
       width: payload.width ?? null,
       height: payload.height ?? null,
       childUpdates: payload.childUpdates ?? [],
-      isAbsoluteMode: false,
+      isAbsoluteMode: payload.layoutMode === 'absolute',
       zIndex: parseInt(textDraft.layoutZIndex, 10) || undefined
     }
     editHistory.upsertDragEdit(nextEdit)
@@ -941,10 +1099,12 @@ export function SessionDetailPage(): React.JSX.Element {
   // Unified save: persist both drag edits and text edits for the current page
   const handleSaveAllEdits = async (): Promise<void> => {
     if (!id || !selectedPage?.pageId || !selectedPage.htmlPath) return
+    commitCurrentElementEdit()
     const snapshot = editHistory.getSnapshotForPage(selectedPage.pageId)
     const hasEdits =
       snapshot.dragEdits.length > 0 ||
       snapshot.textEdits.length > 0 ||
+      snapshot.propertyEdits.length > 0 ||
       snapshot.deletes.length > 0 ||
       snapshot.addElements.length > 0
     if (!hasEdits) {
@@ -977,16 +1137,19 @@ export function SessionDetailPage(): React.JSX.Element {
       const deletedSelectors = new Set(snapshot.deletes.map((d) => d.selector))
       const safeDragEdits = snapshot.dragEdits.filter((e) => !deletedSelectors.has(e.selector))
       const safeTextEdits = snapshot.textEdits.filter((e) => !deletedSelectors.has(e.selector))
+      const safePropertyEdits = snapshot.propertyEdits.filter((e) => !deletedSelectors.has(e.selector))
       // Build descriptive prompt for history
       const parts: string[] = []
       const ac = snapshot.addElements.length
       const dc = snapshot.deletes.length
       const rc = safeDragEdits.length
       const tc = safeTextEdits.length
+      const pc = safePropertyEdits.length
       if (ac > 0) parts.push(`添加 ${ac} 个元素`)
       if (dc > 0) parts.push(`删除 ${dc} 个元素`)
       if (rc > 0) parts.push(`调整 ${rc} 个元素位置`)
       if (tc > 0) parts.push(`编辑 ${tc} 个元素文字`)
+      if (pc > 0) parts.push(`编辑 ${pc} 个元素属性`)
       const prompt = parts.join('、') || '手动调整'
       const result = await ipc.saveEditBatch({
         sessionId: id,
@@ -994,6 +1157,7 @@ export function SessionDetailPage(): React.JSX.Element {
         pageId: selectedPage.pageId,
         dragEdits: safeDragEdits,
         textEdits: safeTextEdits,
+        propertyEdits: safePropertyEdits,
         deletes: snapshot.deletes,
         addElements: filledAddElements,
         prompt
@@ -1006,7 +1170,12 @@ export function SessionDetailPage(): React.JSX.Element {
       useSessionDetailUiStore.getState().bumpThumbnailVersion(selectedPage.pageId)
       setPreviewRefreshKey((key) => key + 1)
       useSessionDetailUiStore.getState().setInteractionMode('preview')
-      const totalCount = result.dragCount + result.textCount + result.deleteCount + result.addCount
+      const totalCount =
+        result.dragCount +
+        result.textCount +
+        (result.propertyCount || 0) +
+        result.deleteCount +
+        result.addCount
       toastSuccess(t('sessionDetail.adjustmentsSaved', { count: totalCount }))
     } catch (error) {
       toastError(error instanceof Error ? error.message : t('sessionDetail.layoutSaveFailed'))
@@ -1018,13 +1187,20 @@ export function SessionDetailPage(): React.JSX.Element {
   const handleDiscardAllEdits = (): void => {
     if (!selectedPage?.pageId) return
     const snapshot = editHistory.getSnapshotForPage(selectedPage.pageId)
-    const hadPending = snapshot.dragEdits.length > 0 || snapshot.textEdits.length > 0 || snapshot.deletes.length > 0
+    const hadPending =
+      snapshot.dragEdits.length > 0 ||
+      snapshot.textEdits.length > 0 ||
+      snapshot.propertyEdits.length > 0 ||
+      snapshot.deletes.length > 0 ||
+      snapshot.addElements.length > 0
     editHistory.clearPage(selectedPage.pageId)
     previewIframeRef.current?.clearEditModeSelection()
     setTextSelection(null)
     setTextDraft(EMPTY_ELEMENT_DRAFT)
-    setPreviewRefreshKey((key) => key + 1)
     useSessionDetailUiStore.getState().setInteractionMode('preview')
+    if (hadPending) {
+      setPreviewRefreshKey((key) => key + 1)
+    }
     if (hadPending) toastInfo(t('sessionDetail.discardedAdjustments'))
   }
 
@@ -1044,9 +1220,9 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleDeleteBySelector = (selector: string): void => {
     if (!selectedPage?.htmlPath || !selectedPage.pageId || !selector) return
-    // Commit any pending text edit for the element being deleted
+    // Commit any pending inspector edit for the element being deleted.
     if (textSelection && textSelection.selector === selector) {
-      commitCurrentTextEdit()
+      commitCurrentElementEdit()
     }
     editHistory.addDelete({
       pageId: selectedPage.pageId,
@@ -1060,59 +1236,237 @@ export function SessionDetailPage(): React.JSX.Element {
   }
 
   const handleElementSelected = (payload: EditSelectionPayload): void => {
-    // Commit previous edit before switching to new element
-    commitCurrentTextEdit()
+    // Commit previous edit before switching to new element.
+    commitCurrentElementEdit()
+    if (!payload.snapshot) {
+      setTextSelection(null)
+      setTextDraft(EMPTY_ELEMENT_DRAFT)
+      return
+    }
     setTextSelection(payload)
     const zValue = payload.zIndex !== undefined ? String(payload.zIndex) : '10'
+    const bounds = payload.snapshot.metrics.page
+    const computed = payload.snapshot.computed
+    const attrs = payload.snapshot.attrs
     if (payload.isText) {
       setTextDraft({
         text: payload.text,
-        color: rgbToHex(payload.style.color),
-        fontSize: fontSizeToNumber(payload.style.fontSize),
-        fontWeight: normalizeFontWeight(payload.style.fontWeight),
-        layoutX: payload.bounds ? String(Math.round(payload.bounds.x)) : '',
-        layoutY: payload.bounds ? String(Math.round(payload.bounds.y)) : '',
-        layoutWidth: payload.bounds ? String(Math.round(payload.bounds.width)) : '',
-        layoutHeight: payload.bounds ? String(Math.round(payload.bounds.height)) : '',
-        layoutZIndex: zValue
+        color: rgbToHex(computed.color),
+        fontSize: fontSizeToNumber(computed.fontSize),
+        fontWeight: normalizeFontWeight(computed.fontWeight),
+        layoutX: String(Math.round(bounds.x)),
+        layoutY: String(Math.round(bounds.y)),
+        layoutWidth: String(Math.round(bounds.width)),
+        layoutHeight: String(Math.round(bounds.height)),
+        layoutZIndex: zValue,
+        opacity: opacityToInput(computed.opacity),
+        backgroundColor: rgbToHex(computed.backgroundColor),
+        objectFit: computed.objectFit || 'contain',
+        alt: attrs.alt || '',
+        poster: attrs.poster || '',
+        controls: Boolean(attrs.controls),
+        muted: Boolean(attrs.muted),
+        loop: Boolean(attrs.loop),
+        autoplay: Boolean(attrs.autoplay),
+        playsInline: attrs.playsInline !== false,
+        preload: attrs.preload || 'metadata'
       })
     } else {
       setTextDraft({
         ...EMPTY_ELEMENT_DRAFT,
-        layoutX: payload.bounds ? String(Math.round(payload.bounds.x)) : '',
-        layoutY: payload.bounds ? String(Math.round(payload.bounds.y)) : '',
-        layoutWidth: payload.bounds ? String(Math.round(payload.bounds.width)) : '',
-        layoutHeight: payload.bounds ? String(Math.round(payload.bounds.height)) : '',
-        layoutZIndex: zValue
+        layoutX: String(Math.round(bounds.x)),
+        layoutY: String(Math.round(bounds.y)),
+        layoutWidth: String(Math.round(bounds.width)),
+        layoutHeight: String(Math.round(bounds.height)),
+        layoutZIndex: zValue,
+        opacity: opacityToInput(computed.opacity),
+        backgroundColor: rgbToHex(computed.backgroundColor),
+        objectFit: computed.objectFit || 'contain',
+        alt: attrs.alt || '',
+        poster: attrs.poster || '',
+        controls: Boolean(attrs.controls),
+        muted: Boolean(attrs.muted),
+        loop: Boolean(attrs.loop),
+        autoplay: Boolean(attrs.autoplay),
+        playsInline: attrs.playsInline !== false,
+        preload: attrs.preload || 'metadata'
       })
     }
   }
 
-  const handleTextDraftChange = (draft: ElementEditDraft): void => {
-    // Detect z-index change and persist as a drag edit
-    if (
-      textSelection &&
-      selectedPage?.htmlPath &&
-      selectedPage?.pageId &&
-      draft.layoutZIndex !== textDraft.layoutZIndex
-    ) {
-      const zNum = parseInt(draft.layoutZIndex, 10)
-      if (Number.isFinite(zNum)) {
-        editHistory.upsertDragEdit({
-          pageId: selectedPage.pageId,
-          htmlPath: selectedPage.htmlPath,
-          selector: textSelection.selector,
-          x: textSelection.translateX ?? 0,
-          y: textSelection.translateY ?? 0,
-          width: textSelection.bounds?.width ?? null,
-          height: textSelection.bounds?.height ?? null,
-          childUpdates: [],
-          isAbsoluteMode: false,
-          zIndex: zNum,
-          zIndexOnly: true
-        })
-      }
+  const getCommitFieldsForSelection = (
+    selection: EditSelectionPayload
+  ): Set<keyof ElementEditDraft> => {
+    const fields = new Set<keyof ElementEditDraft>()
+    const capabilities = selection.capabilities || []
+    if (capabilities.includes('layer')) fields.add('layoutZIndex')
+    if (capabilities.includes('appearance')) {
+      fields.add('opacity')
+      fields.add('backgroundColor')
     }
+    if (capabilities.includes('media')) {
+      fields.add('objectFit')
+      fields.add('alt')
+      fields.add('poster')
+      fields.add('controls')
+      fields.add('muted')
+      fields.add('loop')
+      fields.add('autoplay')
+      fields.add('playsInline')
+      fields.add('preload')
+    }
+    if (capabilities.includes('text')) {
+      fields.add('text')
+      fields.add('color')
+      fields.add('fontSize')
+      fields.add('fontWeight')
+    }
+    return fields
+  }
+
+  const buildElementPropertyPatch = (
+    draft: ElementEditDraft,
+    fields?: Array<keyof ElementEditDraft>
+  ): ElementPropertyPatch | null => {
+    if (!textSelection?.snapshot) return null
+
+    const commitFields =
+      fields && fields.length > 0 ? new Set(fields) : getCommitFieldsForSelection(textSelection)
+    const initial = textSelection.snapshot
+    const style: ElementPropertyStylePatch = {}
+    const attrs: ElementPropertyAttrsPatch = {}
+    let text: string | undefined
+
+    if (commitFields.has('layoutZIndex')) {
+      const value = parseInt(draft.layoutZIndex, 10)
+      const initialValue = textSelection.zIndex ?? 10
+      if (Number.isFinite(value) && value !== initialValue) style.zIndex = value
+    }
+    if (commitFields.has('opacity')) {
+      const value = Number(draft.opacity)
+      const initialValue = Number(opacityToInput(initial.computed.opacity))
+      if (Number.isFinite(value) && value !== initialValue) style.opacity = value
+    }
+    if (
+      commitFields.has('backgroundColor') &&
+      draft.backgroundColor !== rgbToHex(initial.computed.backgroundColor)
+    ) {
+      style.backgroundColor = draft.backgroundColor
+    }
+    if (commitFields.has('objectFit') && draft.objectFit !== (initial.computed.objectFit || 'contain')) {
+      style.objectFit = draft.objectFit
+    }
+    if (commitFields.has('text') && draft.text.trim() && draft.text.trim() !== (initial.text?.value || '')) {
+      text = draft.text.trim()
+    }
+    if (commitFields.has('color') && draft.color !== rgbToHex(initial.computed.color)) {
+      style.color = draft.color
+    }
+    if (commitFields.has('fontSize') && draft.fontSize !== fontSizeToNumber(initial.computed.fontSize)) {
+      style.fontSize = draft.fontSize ? `${draft.fontSize}px` : undefined
+    }
+    if (
+      commitFields.has('fontWeight') &&
+      draft.fontWeight !== normalizeFontWeight(initial.computed.fontWeight)
+    ) {
+      style.fontWeight = draft.fontWeight
+    }
+    if (commitFields.has('alt') && draft.alt !== (initial.attrs.alt || '')) attrs.alt = draft.alt
+    if (commitFields.has('poster') && draft.poster !== (initial.attrs.poster || '')) {
+      attrs.poster = draft.poster
+    }
+    if (commitFields.has('controls') && draft.controls !== Boolean(initial.attrs.controls)) {
+      attrs.controls = draft.controls
+    }
+    if (commitFields.has('muted') && draft.muted !== Boolean(initial.attrs.muted)) {
+      attrs.muted = draft.muted
+    }
+    if (commitFields.has('loop') && draft.loop !== Boolean(initial.attrs.loop)) {
+      attrs.loop = draft.loop
+    }
+    if (commitFields.has('autoplay') && draft.autoplay !== Boolean(initial.attrs.autoplay)) {
+      attrs.autoplay = draft.autoplay
+    }
+    if (commitFields.has('playsInline') && draft.playsInline !== (initial.attrs.playsInline !== false)) {
+      attrs.playsInline = draft.playsInline
+    }
+    if (commitFields.has('preload') && draft.preload !== (initial.attrs.preload || 'metadata')) {
+      attrs.preload = draft.preload
+    }
+
+    if (text === undefined && Object.keys(style).length === 0 && Object.keys(attrs).length === 0) {
+      return null
+    }
+    return {
+      text,
+      style: Object.keys(style).length > 0 ? style : undefined,
+      attrs: Object.keys(attrs).length > 0 ? attrs : undefined
+    }
+  }
+
+  const commitElementDraft = (
+    draft: ElementEditDraft,
+    fields?: Array<keyof ElementEditDraft>
+  ): boolean => {
+    if (!textSelection || !selectedPage?.pageId || !selectedPage.htmlPath) return false
+    const patch = buildElementPropertyPatch(draft, fields)
+    if (!patch) return false
+    editHistory.upsertPropertyEdit({
+      pageId: selectedPage.pageId,
+      htmlPath: selectedPage.htmlPath,
+      selector: textSelection.selector,
+      blockId: textSelection.blockId,
+      patch
+    })
+    return true
+  }
+
+  const commitCurrentElementEdit = (): boolean => commitElementDraft(textDraft)
+
+  const handleTextDraftChange = (
+    draft: ElementEditDraft,
+    options?: { commit?: boolean; fields?: Array<keyof ElementEditDraft> }
+  ): void => {
+    const liveStyle: {
+      zIndex?: number
+      opacity?: number
+      backgroundColor?: string
+      objectFit?: string
+    } = {}
+    const liveAttrs: {
+      alt?: string
+      poster?: string
+      controls?: boolean
+      muted?: boolean
+      loop?: boolean
+      autoplay?: boolean
+      playsInline?: boolean
+      preload?: string
+    } = {}
+
+    if (textSelection && selectedPage?.htmlPath && selectedPage?.pageId && draft.layoutZIndex !== textDraft.layoutZIndex) {
+      const zNum = parseInt(draft.layoutZIndex, 10)
+      if (Number.isFinite(zNum)) liveStyle.zIndex = zNum
+    }
+    if (draft.opacity !== textDraft.opacity) {
+      const opacity = Number(draft.opacity)
+      if (Number.isFinite(opacity)) liveStyle.opacity = opacity
+    }
+    if (draft.backgroundColor !== textDraft.backgroundColor) {
+      liveStyle.backgroundColor = draft.backgroundColor
+    }
+    if (draft.objectFit !== textDraft.objectFit) {
+      liveStyle.objectFit = draft.objectFit
+    }
+    if (draft.alt !== textDraft.alt) liveAttrs.alt = draft.alt
+    if (draft.poster !== textDraft.poster) liveAttrs.poster = draft.poster
+    if (draft.controls !== textDraft.controls) liveAttrs.controls = draft.controls
+    if (draft.muted !== textDraft.muted) liveAttrs.muted = draft.muted
+    if (draft.loop !== textDraft.loop) liveAttrs.loop = draft.loop
+    if (draft.autoplay !== textDraft.autoplay) liveAttrs.autoplay = draft.autoplay
+    if (draft.playsInline !== textDraft.playsInline) liveAttrs.playsInline = draft.playsInline
+    if (draft.preload !== textDraft.preload) liveAttrs.preload = draft.preload
+
     setTextDraft(draft)
     // Live preview in iframe
     if (textSelection && selectedPage?.pageId) {
@@ -1120,6 +1474,12 @@ export function SessionDetailPage(): React.JSX.Element {
       const zNum = parseInt(draft.layoutZIndex, 10)
       if (Number.isFinite(zNum) && draft.layoutZIndex !== textDraft.layoutZIndex) {
         previewIframeRef.current?.applyZIndex(textSelection.selector, zNum)
+      }
+      if (Object.keys(liveStyle).length > 0 || Object.keys(liveAttrs).length > 0) {
+        previewIframeRef.current?.applyElementProperties(textSelection.selector, {
+          style: liveStyle,
+          attrs: liveAttrs
+        })
       }
       // Text & style: only for text elements
       if (textSelection.isText) {
@@ -1132,37 +1492,11 @@ export function SessionDetailPage(): React.JSX.Element {
           }
         })
       }
-    }
-  }
 
-  // When user starts editing a new element, save the previous text edit as pending
-  const commitCurrentTextEdit = (): void => {
-    if (!textSelection || !selectedPage?.pageId || !selectedPage.htmlPath) return
-    const nextText = textDraft.text.trim()
-    if (!nextText) return
-    // Skip if nothing actually changed
-    if (
-      nextText === textSelection.text &&
-      textDraft.color === rgbToHex(textSelection.style.color) &&
-      textDraft.fontSize === fontSizeToNumber(textSelection.style.fontSize) &&
-      textDraft.fontWeight === normalizeFontWeight(textSelection.style.fontWeight)
-    )
-      return
-    const patch = {
-      text: nextText,
-      style: {
-        color: textDraft.color,
-        fontSize: textDraft.fontSize,
-        fontWeight: textDraft.fontWeight
+      if (options?.commit) {
+        commitElementDraft(draft, options.fields)
       }
     }
-    const entry = {
-      pageId: selectedPage.pageId,
-      htmlPath: selectedPage.htmlPath,
-      selector: textSelection.selector,
-      patch
-    }
-    editHistory.upsertTextEdit(entry)
   }
 
   const replayPendingEdits = (): void => {
@@ -1181,7 +1515,8 @@ export function SessionDetailPage(): React.JSX.Element {
         x: d.x,
         y: d.y,
         width: d.width ?? undefined,
-        height: d.height ?? undefined
+        height: d.height ?? undefined,
+        isAbsoluteMode: d.isAbsoluteMode
       })
       if (d.zIndex !== undefined) {
         iframe.applyZIndex(d.selector, d.zIndex)
@@ -1195,6 +1530,22 @@ export function SessionDetailPage(): React.JSX.Element {
         text: t.patch.text,
         style: t.patch.style
       })
+    }
+    for (const p of snapshot.propertyEdits) {
+      iframe.applyElementProperties(p.selector, {
+        style: p.patch.style,
+        attrs: p.patch.attrs
+      })
+      if (p.patch.text || p.patch.style?.color || p.patch.style?.fontSize || p.patch.style?.fontWeight) {
+        iframe.liveUpdateElement(p.selector, {
+          text: p.patch.text,
+          style: {
+            color: p.patch.style?.color,
+            fontSize: p.patch.style?.fontSize,
+            fontWeight: p.patch.style?.fontWeight
+          }
+        })
+      }
     }
   }
 
@@ -1215,8 +1566,8 @@ export function SessionDetailPage(): React.JSX.Element {
   }
 
   const handleCancelTextEdit = (): void => {
-    // Commit current text edit before closing panel
-    commitCurrentTextEdit()
+    // Commit current inspector edit before closing panel.
+    commitCurrentElementEdit()
     previewIframeRef.current?.clearEditModeSelection()
     setTextSelection(null)
     setTextDraft(EMPTY_ELEMENT_DRAFT)
@@ -1224,11 +1575,30 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleCopyElement = (): void => {
     if (!textSelection || !selectedPage?.pageId || !selectedPage.htmlPath) return
-    const blockId = 'select-ai-ppt-' + nanoid(8)
+    const blockId = 'select-arcsin1-' + nanoid(8)
     const newSelector = previewIframeRef.current?.copyElement(textSelection.selector, blockId)
     if (!newSelector) return
-    const bounds = textSelection.bounds
+    const bounds = textSelection.pageBounds || textSelection.bounds
     const zValue = textSelection.zIndex !== undefined ? String(textSelection.zIndex + 1) : '10'
+    const nextSnapshot = textSelection.snapshot
+      ? {
+          ...textSelection.snapshot,
+          selector: newSelector,
+          blockId,
+          label: newSelector,
+          metrics: {
+            ...textSelection.snapshot.metrics,
+            page: bounds
+              ? { x: bounds.x + 20, y: bounds.y + 20, width: bounds.width, height: bounds.height }
+              : textSelection.snapshot.metrics.page,
+            viewport: bounds
+              ? { x: bounds.x + 20, y: bounds.y + 20, width: bounds.width, height: bounds.height }
+              : textSelection.snapshot.metrics.viewport,
+            translateX: 0,
+            translateY: 0
+          }
+        }
+      : null
     editHistory.addElement({
       pageId: selectedPage.pageId,
       htmlPath: selectedPage.htmlPath,
@@ -1239,13 +1609,18 @@ export function SessionDetailPage(): React.JSX.Element {
     })
     handleElementSelected({
       selector: newSelector,
+      blockId,
       label: newSelector,
       elementTag: textSelection.elementTag,
       elementText: '',
+      kind: textSelection.kind,
+      capabilities: textSelection.capabilities,
+      snapshot: nextSnapshot,
       isText: false,
       text: '',
       style: {},
       bounds: bounds ? { x: bounds.x + 20, y: bounds.y + 20, width: bounds.width, height: bounds.height } : undefined,
+      pageBounds: bounds ? { x: bounds.x + 20, y: bounds.y + 20, width: bounds.width, height: bounds.height } : undefined,
       translateX: 0,
       translateY: 0,
       zIndex: parseInt(zValue, 10),
@@ -1255,7 +1630,7 @@ export function SessionDetailPage(): React.JSX.Element {
 
   const handleAddElement = (relativePath: string, _fileName: string): void => {
     if (!id || !selectedPage?.pageId || !selectedPage.htmlPath) return
-    const blockId = 'select-ai-ppt-' + nanoid(8)
+    const blockId = 'select-arcsin1-' + nanoid(8)
     const parentSelector = `body[data-page-id="${selectedPage.pageId}"] [data-ppt-guard-root="1"]`
     const isVideo = /^\.\/videos\//i.test(relativePath)
     // Offset each added element so they don't overlap
@@ -1269,7 +1644,7 @@ export function SessionDetailPage(): React.JSX.Element {
     const top = Math.min(200 + offset, 900 - h - 20)
     const zIdx = 10 + existingCount
     const htmlFragment = isVideo
-      ? `<video src="${relativePath}" data-block-id="${blockId}" style="position:absolute; left:${left}px; top:${top}px; width:${w}px; height:${h}px; z-index:${zIdx};" controls playsinline></video>`
+      ? `<video src="${relativePath}" data-block-id="${blockId}" style="position:absolute; left:${left}px; top:${top}px; width:${w}px; height:${h}px; z-index:${zIdx}; object-fit:contain;" controls playsinline preload="metadata"></video>`
       : `<img src="${relativePath}" alt="" data-block-id="${blockId}" style="position:absolute; left:${left}px; top:${top}px; width:${w}px; height:${h}px; z-index:${zIdx}; object-fit:contain;" />`
     editHistory.addElement({
       pageId: selectedPage.pageId,
@@ -1306,13 +1681,41 @@ export function SessionDetailPage(): React.JSX.Element {
     handleAddElement(asset.relativePath, asset.originalName || asset.fileName)
   }
 
+  const handleSaveTemplate = async (payload: {
+    name: string
+    description: string
+    tags: string[]
+  }): Promise<void> => {
+    if (!id || savingTemplate) return
+    setSavingTemplate(true)
+    try {
+      await createTemplateFromSession({
+        sessionId: id,
+        ...payload
+      })
+      toastSuccess('已保存为模板', {
+        action: {
+          label: '查看模板',
+          onClick: () => navigate('/templates')
+        }
+      })
+      setSaveTemplateOpen(false)
+    } catch (err) {
+      toastError('保存模板失败', {
+        description: err instanceof Error ? err.message : t('common.retryLater')
+      })
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
   return (
     <TooltipProvider delayDuration={180}>
       <div
-        className="flex h-full min-h-0 flex-col bg-[#f5f1e8] text-foreground outline-none"
+        className="flex h-full min-h-0 flex-col bg-[var(--color-bg-subtle)] text-foreground outline-none"
       >
-        <header className="app-drag-region app-titlebar relative shrink-0 bg-[#f5f1e8]/95 shadow-[0_10px_26px_rgba(93,107,77,0.055)] backdrop-blur-xl">
-          <div className="absolute left-0 top-0 h-full w-[220px] bg-[#f5f1e8]" />
+        <header className="app-drag-region app-titlebar relative shrink-0 bg-[var(--color-bg-subtle)]/95 shadow-[0_10px_26px_rgba(124,58,237,0.10)] backdrop-blur-xl">
+          <div className="absolute left-0 top-0 h-full w-[220px] bg-[var(--color-bg-subtle)]" />
           <div
             className={`relative flex h-full items-center justify-end pl-[244px] ${
               isMac ? 'px-3' : 'pr-[calc(var(--app-titlebar-control-safe-area)+16px)]'
@@ -1327,6 +1730,7 @@ export function SessionDetailPage(): React.JSX.Element {
                 onExportPdf={() => void handleExportPdf()}
                 onExportPng={() => void handleExportPng()}
                 onExportPptx={(options) => void handleExportPptx(options)}
+                onExportSessionZip={() => void handleExportSessionZip()}
                 onExportSlidePack={() => void handleExportSlidePack()}
                 onOpenHistory={() => void handleOpenHistory()}
                 onOpenPreview={() => void openProjectPreview()}
@@ -1335,6 +1739,7 @@ export function SessionDetailPage(): React.JSX.Element {
                     void ipc.revealFile(selectedPage.htmlPath, id || undefined)
                   }
                 }}
+                onSaveTemplate={() => setSaveTemplateOpen(true)}
                 onPresent={() => {
                   const idx = normalizedOrderedPages.findIndex((p) => p.id === selectedPageId)
                   void ipc.openPresentation({
@@ -1347,94 +1752,110 @@ export function SessionDetailPage(): React.JSX.Element {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 bg-[#f5f1e8]">
+        <div className="flex min-h-0 flex-1 bg-[var(--color-bg-subtle)]">
           <PageSidebar
             pages={normalizedOrderedPages}
             disabled={interactionMode === 'ai-inspect' && isGenerating}
+            onAddBlankPage={handleOpenBlankPageDialog}
             onAddPage={handleOpenAddPageDialog}
             onRetryFailedPage={handleRetryFailedPage}
             onReorderPages={handleReorderPages}
             onDeletePage={handleDeletePage}
-            pageManagementDisabled={isGenerating || isAddingPage || isRetryingSinglePage}
+            onRenamePage={handleOpenTitleEditDialog}
+            pageManagementDisabled={isGenerating || isAddingPage || isRetryingSinglePage || isManagingPages}
             collapsed={sidebarCollapsed}
             onToggleCollapsed={toggleSidebarCollapsed}
           />
 
-          <PreviewStage
-            ref={previewIframeRef}
-            selectedPage={selectedPage}
-            sessionTitle={currentSession?.title}
-            isGenerating={isGenerating}
-            progressLabel={progress?.label}
-            previewRefreshKey={previewRefreshKey}
-            isSavingEdits={isSavingEdits}
-            canUndo={editHistory.canUndo()}
-            canRedo={editHistory.canRedo()}
-            hasPendingEdits={
-              selectedPage
-                ? (() => {
-                    const s = editHistory.getSnapshotForPage(selectedPage.pageId)
-                    return s.dragEdits.length > 0 || s.textEdits.length > 0 || s.deletes.length > 0 || s.addElements.length > 0
-                  })()
-                : false
-            }
-            onElementMoved={handleElementMoved}
-            onElementSelected={handleElementSelected}
-            onCancelTextEdit={handleCancelTextEdit}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            onReplayPendingEdits={replayPendingEdits}
-            onSaveAllEdits={() => void handleSaveAllEdits()}
-            onDiscardAllEdits={handleDiscardAllEdits}
-            onAddFromLibrary={(type) => setAssetPickerOpen(true, type)}
-            onAddFromLocal={(type) => void handleUploadAndAdd(type)}
-            onDeleteRequest={(selector) => {
-              setPendingDeleteSelector(selector)
-              setDeleteConfirmOpen(true)
-            }}
-          />
-
-          {interactionMode === 'edit' && textSelection && (
-            <ElementInspectorPanel
-              selection={textSelection}
-              draft={textDraft}
-              onDraftChange={handleTextDraftChange}
-              onClose={handleCancelTextEdit}
-              onCopy={handleCopyElement}
-              onDelete={handleDeleteElement}
-            />
-          )}
-
-          {interactionMode === 'ai-inspect' && (
-            <MessagePanel
-              selectedPageExists={Boolean(selectedPage?.pageId)}
-              selectedPageNumber={selectedPage?.pageNumber}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <PreviewToolbar
+              selectedPage={selectedPage}
               isGenerating={isGenerating}
-              progress={progress}
-              error={error}
-              onDropFiles={(files) => void uploadFiles(files)}
-              onChooseAssets={(assetType) => void handleChooseAssets(assetType)}
-              onSend={() => void handleSend()}
-              onCancel={() => void handleCancel()}
-              cleanMessageContent={cleanMessageContent}
+              isSavingEdits={isSavingEdits}
+              canUndo={editHistory.canUndo()}
+              canRedo={editHistory.canRedo()}
+              hasPendingEdits={
+                selectedPage
+                  ? (() => {
+                      const s = editHistory.getSnapshotForPage(selectedPage.pageId)
+                      return (
+                        s.dragEdits.length > 0 ||
+                        s.textEdits.length > 0 ||
+                        s.propertyEdits.length > 0 ||
+                        s.deletes.length > 0 ||
+                        s.addElements.length > 0
+                      )
+                    })()
+                  : false
+              }
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onSaveAllEdits={() => void handleSaveAllEdits()}
+              onDiscardAllEdits={handleDiscardAllEdits}
+              onAddFromLibrary={(type) => setAssetPickerOpen(true, type)}
+              onAddFromLocal={(type) => void handleUploadAndAdd(type)}
             />
-          )}
+            <div className="flex min-h-0 flex-1">
+              <PreviewStage
+                ref={previewIframeRef}
+                selectedPage={selectedPage}
+                sessionTitle={currentSession?.title}
+                isGenerating={isGenerating}
+                progressLabel={progress?.label}
+                previewRefreshKey={previewRefreshKey}
+                onElementMoved={handleElementMoved}
+                onElementSelected={handleElementSelected}
+                onCancelTextEdit={handleCancelTextEdit}
+                onDiscardAllEdits={handleDiscardAllEdits}
+                onReplayPendingEdits={replayPendingEdits}
+                onDeleteRequest={(selector) => {
+                  setPendingDeleteSelector(selector)
+                  setDeleteConfirmOpen(true)
+                }}
+              />
+              {interactionMode === 'edit' && textSelection && (
+                <ElementInspectorPanel
+                  selection={textSelection}
+                  draft={textDraft}
+                  onDraftChange={handleTextDraftChange}
+                  onClose={handleCancelTextEdit}
+                  onCopy={handleCopyElement}
+                  onDelete={handleDeleteElement}
+                />
+              )}
+              {interactionMode === 'ai-inspect' && (
+                <MessagePanel
+                  selectedPageExists={Boolean(selectedPage?.pageId)}
+                  selectedPageNumber={selectedPage?.pageNumber}
+                  isGenerating={isGenerating}
+                  progress={progress}
+                  error={error}
+                  onDropFiles={(files) => void uploadFiles(files)}
+                  onChooseAssets={(assetType) => void handleChooseAssets(assetType)}
+                  onSend={() => void handleSend()}
+                  onCancel={() => void handleCancel()}
+                  cleanMessageContent={cleanMessageContent}
+                />
+              )}
+            </div>
+          </div>
+
         </div>
 
         {historyOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="flex max-h-[78vh] w-[560px] flex-col rounded-2xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#e8e0d0] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-[var(--color-border-default)] px-5 py-4">
                 <div>
-                  <h3 className="text-base font-semibold text-[#2f3a2a]">
+                  <h3 className="text-base font-semibold text-[var(--color-fg-default)]">
                     {t('sessionDetail.historyTitle')}
                   </h3>
-                  <p className="mt-1 text-xs text-[#8a9a7b]">{t('sessionDetail.historyRecent')}</p>
+                  <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">{t('sessionDetail.historyRecent')}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setHistoryOpen(false)}
-                  className="rounded-lg px-2 py-1 text-sm text-[#6f7d62] hover:bg-[#f2efe7]"
+                  className="rounded-lg px-2 py-1 text-sm text-[var(--color-fg-tertiary)] hover:bg-[var(--color-bg-muted)]"
                   disabled={Boolean(historyRollbackId)}
                 >
                   {t('common.cancel')}
@@ -1442,15 +1863,15 @@ export function SessionDetailPage(): React.JSX.Element {
               </div>
               <div className="min-h-[220px] overflow-y-auto px-5 py-4">
                 {historyLoading ? (
-                  <div className="flex h-40 items-center justify-center text-sm text-[#8a9a7b]">
+                  <div className="flex h-40 items-center justify-center text-sm text-[var(--color-fg-tertiary)]">
                     {t('sessionDetail.historyLoading')}
                   </div>
                 ) : historyVersions.length === 0 ? (
                   <div className="flex h-40 flex-col items-center justify-center text-center">
-                    <p className="text-sm font-medium text-[#3e4a32]">
+                    <p className="text-sm font-medium text-[var(--color-fg-default)]">
                       {t('sessionDetail.historyEmptyTitle')}
                     </p>
-                    <p className="mt-2 text-xs text-[#8a9a7b]">
+                    <p className="mt-2 text-xs text-[var(--color-fg-tertiary)]">
                       {t('sessionDetail.historyEmptyDescription')}
                     </p>
                   </div>
@@ -1465,28 +1886,28 @@ export function SessionDetailPage(): React.JSX.Element {
                       return (
                         <div
                           key={version.id}
-                          className="rounded-xl border border-[#e8e0d0] bg-[#faf8f2] px-4 py-3"
+                          className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-4 py-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="truncate text-sm font-semibold text-[#2f3a2a]">
+                                <p className="truncate text-sm font-semibold text-[var(--color-fg-default)]">
                                   {version.title}
                                 </p>
                                 {version.isCurrent && (
-                                  <span className="rounded-full bg-[#d4e4c1] px-2 py-0.5 text-[10px] font-medium text-[#3e4a32]">
+                                  <span className="rounded-full bg-[var(--color-brand-subtle)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-fg-default)]">
                                     {t('sessionDetail.historyCurrent')}
                                   </span>
                                 )}
                               </div>
-                              <p className="mt-1 text-xs text-[#8a9a7b]">
+                              <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">
                                 {formatHistoryTime(version.createdAt)}
                               </p>
-                              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-[#5d6b4d]">
+                              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--color-brand)]">
                                 {version.description}
                               </p>
                               {version.changedPages.length > 0 && (
-                                <p className="mt-2 text-[11px] text-[#7b6d55]">
+                                <p className="mt-2 text-[11px] text-[var(--color-fg-tertiary)]">
                                   {t('sessionDetail.historyChangedPages', {
                                     pages: version.changedPages.join('、')
                                   })}
@@ -1498,7 +1919,7 @@ export function SessionDetailPage(): React.JSX.Element {
                                 type="button"
                                 disabled={rollbackDisabled}
                                 onClick={() => requestRollbackHistory(version)}
-                                className="shrink-0 rounded-lg bg-[#3e4a32] px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[#2f3a2a] disabled:cursor-not-allowed disabled:bg-[#c8c0b3]"
+                                className="shrink-0 rounded-lg bg-[var(--color-fg-default)] px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-[var(--color-fg-default)] disabled:cursor-not-allowed disabled:bg-[var(--color-border-default)]"
                               >
                                 {historyRollbackId === version.id
                                   ? t('sessionDetail.historyRollingBack')
@@ -1516,19 +1937,71 @@ export function SessionDetailPage(): React.JSX.Element {
           </div>
         )}
 
+        {/* Add Blank Page Dialog */}
+        {blankPageDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="w-[520px] rounded-2xl bg-white p-6 shadow-2xl">
+              <h3 className="mb-2 text-base font-semibold text-[var(--color-fg-default)]">
+                {t('sessionDetail.addBlankPage')}
+              </h3>
+              <p className="mb-4 text-xs leading-5 text-[var(--color-fg-tertiary)]">
+                {t('sessionDetail.addBlankPageHint')}
+              </p>
+              <div className="mb-4 max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                {normalizedOrderedPages.map((page) => (
+                  <button
+                    key={page.id}
+                    type="button"
+                    onClick={() => setBlankPageSourceId(page.id)}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors ${
+                      blankPageSourceId === page.id
+                        ? 'border-[#8eaa70] bg-[#eef6e7] text-[var(--color-fg-default)]'
+                        : 'border-[var(--color-brand-subtle)]/60 bg-[var(--color-bg-muted)] text-[var(--color-brand)] hover:bg-[var(--color-bg-muted)]'
+                    }`}
+                  >
+                    <span className="shrink-0 rounded-md bg-[var(--color-brand-subtle)]/70 px-2 py-1 text-[11px] font-semibold text-[var(--color-fg-default)]">
+                      P{page.pageNumber}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {page.title || t('sessionDetail.untitledPage')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBlankPageDialogOpen(false)}
+                  className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-brand)] transition-colors hover:bg-[var(--color-bg-muted)] cursor-pointer"
+                >
+                  {t('sessionDetail.addPageCancel')}
+                </button>
+                <button
+                  type="button"
+                  disabled={!blankPageSourceId}
+                  onClick={() => void handleCreateBlankPage()}
+                  className="rounded-xl bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-fg-default)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  {t('sessionDetail.addBlankPageCreate')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Add Page Dialog */}
         {addPageDialogOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="w-[520px] rounded-2xl bg-white p-6 shadow-2xl">
-              <h3 className="mb-3 text-base font-semibold text-[#2f3a2a]">
+              <h3 className="mb-3 text-base font-semibold text-[var(--color-fg-default)]">
                 {t('sessionDetail.addPage')}
               </h3>
-              <p className="mb-3 text-xs text-[#8a9a7b]">{t('sessionDetail.addPageHint')}</p>
+              <p className="mb-3 text-xs text-[var(--color-fg-tertiary)]">{t('sessionDetail.addPageHint')}</p>
               <textarea
                 value={addPageInput}
                 onChange={(e) => setAddPageInput(e.target.value)}
                 placeholder={t('sessionDetail.addPageDescription')}
-                className="mb-4 h-40 w-full resize-none rounded-xl border border-[#d4e4c1]/60 bg-[#f8f6f0] px-4 py-3 text-sm leading-relaxed text-[#2f3a2a] placeholder:text-[#8a9a7b] focus:border-[#5d6b4d] focus:outline-none"
+                className="mb-4 h-40 w-full resize-none rounded-xl border border-[var(--color-brand-subtle)]/60 bg-[var(--color-bg-muted)] px-4 py-3 text-sm leading-relaxed text-[var(--color-fg-default)] placeholder:text-[var(--color-fg-tertiary)] focus:border-[var(--color-brand)] focus:outline-none"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey && addPageInput.trim()) {
@@ -1544,7 +2017,7 @@ export function SessionDetailPage(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => setAddPageDialogOpen(false)}
-                  className="rounded-xl px-4 py-2 text-sm font-medium text-[#5d6b4d] transition-colors hover:bg-[#f0ece3] cursor-pointer"
+                  className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-brand)] transition-colors hover:bg-[var(--color-bg-muted)] cursor-pointer"
                 >
                   {t('sessionDetail.addPageCancel')}
                 </button>
@@ -1552,7 +2025,7 @@ export function SessionDetailPage(): React.JSX.Element {
                   type="button"
                   disabled={!addPageInput.trim()}
                   onClick={() => void handleAddPage()}
-                  className="rounded-xl bg-[#5d6b4d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#3e4a32] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  className="rounded-xl bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-fg-default)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {t('sessionDetail.addPageGenerate')}
                 </button>
@@ -1565,14 +2038,14 @@ export function SessionDetailPage(): React.JSX.Element {
         {isAddingPage && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
             <div className="flex w-[360px] flex-col items-center gap-4 rounded-2xl bg-white/95 px-8 py-6 shadow-2xl">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#d4e4c1] border-t-[#5d6b4d]" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-brand-subtle)] border-t-[var(--color-brand)]" />
               <div className="flex w-full flex-col items-center gap-2">
-                <p className="text-sm font-medium text-[#3e4a32]">
+                <p className="text-sm font-medium text-[var(--color-fg-default)]">
                   {progress?.label || t('sessionDetail.addPageGenerating')}
                 </p>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8e0d0]">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border-default)]">
                   <div
-                    className="h-full rounded-full bg-[#5d6b4d] transition-all duration-300 ease-out"
+                    className="h-full rounded-full bg-[var(--color-brand)] transition-all duration-300 ease-out"
                     style={{ width: `${Math.min(100, Math.max(0, progress?.progress ?? 0))}%` }}
                   />
                 </div>
@@ -1585,14 +2058,14 @@ export function SessionDetailPage(): React.JSX.Element {
         {isRetryingSinglePage && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 backdrop-blur-sm">
             <div className="flex w-[360px] flex-col items-center gap-4 rounded-2xl bg-white/95 px-8 py-6 shadow-2xl">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#f3e4df] border-t-[#93564f]" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#fef2f2] border-t-[var(--color-danger)]" />
               <div className="flex w-full flex-col items-center gap-2">
-                <p className="text-sm font-medium text-[#93564f]">
+                <p className="text-sm font-medium text-[var(--color-danger)]">
                   {progress?.label || t('sessionDetail.retryPageGenerating')}
                 </p>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8e0d0]">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border-default)]">
                   <div
-                    className="h-full rounded-full bg-[#93564f] transition-all duration-300 ease-out"
+                    className="h-full rounded-full bg-[var(--color-danger)] transition-all duration-300 ease-out"
                     style={{ width: `${Math.min(100, Math.max(0, progress?.progress ?? 0))}%` }}
                   />
                 </div>
@@ -1600,6 +2073,57 @@ export function SessionDetailPage(): React.JSX.Element {
             </div>
           </div>
         )}
+        <Dialog
+          open={Boolean(titleEditPage)}
+          onOpenChange={(open) => {
+            if (!open && !isManagingPages) setTitleEditPage(null)
+          }}
+        >
+          <DialogContent showClose={!isManagingPages}>
+            <DialogHeader>
+              <DialogTitle>{t('pageManagement.editPageTitle')}</DialogTitle>
+              <DialogDescription>{t('pageManagement.editPageTitleDescription')}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-[var(--color-brand)]" htmlFor="page-title-input">
+                {t('pageManagement.pageTitleLabel')}
+              </label>
+              <Input
+                id="page-title-input"
+                value={titleEditDraft}
+                onChange={(event) => setTitleEditDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    void handleSavePageTitle()
+                  }
+                }}
+                placeholder={t('pageManagement.pageTitlePlaceholder')}
+                disabled={isManagingPages}
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setTitleEditPage(null)}
+                disabled={isManagingPages}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void handleSavePageTitle()}
+                disabled={isManagingPages || !titleEditDraft.trim()}
+              >
+                {t('pageManagement.savePageTitle')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={Boolean(deleteConfirmPage)}
           onOpenChange={(open) => {
@@ -1676,6 +2200,13 @@ export function SessionDetailPage(): React.JSX.Element {
           onClose={() => setAssetPickerOpen(false)}
           onConfirm={handleAddElement}
         />
+        <SaveTemplateDialog
+          open={saveTemplateOpen}
+          defaultName={currentSession?.title || '未命名模板'}
+          saving={savingTemplate}
+          onOpenChange={setSaveTemplateOpen}
+          onSubmit={(payload) => void handleSaveTemplate(payload)}
+        />
         <AlertDialog
           open={deleteConfirmOpen}
           onOpenChange={(open) => {
@@ -1691,7 +2222,7 @@ export function SessionDetailPage(): React.JSX.Element {
             <div className="flex justify-end gap-2">
               <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-[#c0392b] text-white hover:bg-[#a93226]"
+                className="bg-[var(--color-danger)] text-white hover:bg-[#b91c1c]"
                 onClick={() => {
                   if (pendingDeleteSelector) {
                     handleDeleteBySelector(pendingDeleteSelector)

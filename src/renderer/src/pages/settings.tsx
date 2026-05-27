@@ -22,7 +22,7 @@ import {
   resolveModelTimeoutMs
 } from '@shared/model-timeout.js'
 
-type ProviderId = 'anthropic' | 'openai'
+type ProviderId = 'anthropic' | 'openai' | 'google'
 
 interface ModelForm {
   id?: string
@@ -337,10 +337,10 @@ export function SettingsPage(): React.JSX.Element {
   return (
     <div className="mx-auto max-w-4xl p-6">
       <div className="mb-5">
-        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-fg-tertiary)]">
           {t('settings.eyebrow')}
         </p>
-        <h1 className="organic-serif mt-2 text-[32px] font-semibold leading-none text-[#3e4a32]">
+        <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-tight text-[var(--color-fg-default)]">
           {t('settings.title')}
         </h1>
       </div>
@@ -361,7 +361,7 @@ export function SettingsPage(): React.JSX.Element {
               <div>
                 <label className="mb-1.5 block text-sm font-medium">{t('settings.language')}</label>
                 <Select value={lang} onValueChange={(v) => setLang(v === 'en' ? 'en' : 'zh')}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger>
                     <SelectValue placeholder={t('settings.languagePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -387,14 +387,15 @@ export function SettingsPage(): React.JSX.Element {
                     value={storagePath}
                     readOnly
                     placeholder={t('settings.storagePlaceholder')}
-                    className="h-10 min-w-0 flex-1"
+                    className="min-w-0 flex-1"
                   />
                   <Button
-                    variant="secondary"
+                    variant="outline"
+                    size="md"
                     onClick={handleChoosePath}
-                    className="h-10 min-w-[96px] shrink-0 rounded-lg border border-[#7ea06f]/45 px-4"
+                    className="shrink-0"
                   >
-                    <FolderSearch className="mr-1.5 h-4 w-4" />
+                    <FolderSearch className="h-3.5 w-3.5" />
                     {t('settings.choose')}
                   </Button>
                 </div>
@@ -422,7 +423,7 @@ export function SettingsPage(): React.JSX.Element {
             </CardHeader>
             <CardContent className="space-y-2.5 p-5 pt-0">
               {modelConfigs.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-[#d8ccb5]/85 bg-[#fff9ef]/70 p-6 text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed border-[var(--color-border-strong)] bg-[var(--color-bg-subtle)] p-6 text-sm text-[var(--color-fg-tertiary)]">
                   {t('settings.noModels')}
                 </div>
               ) : (
@@ -431,21 +432,21 @@ export function SettingsPage(): React.JSX.Element {
                     key={config.id}
                     className={
                       config.active
-                        ? 'flex flex-col gap-3 rounded-lg border border-[#96b77f]/80 bg-[#eef6e8] p-3 shadow-[inset_3px_0_0_#6f8f64] sm:flex-row sm:items-center sm:justify-between'
-                        : 'flex flex-col gap-3 rounded-lg border border-[#d8ccb5]/80 bg-[#fffdf8]/78 p-3 sm:flex-row sm:items-center sm:justify-between'
+                        ? 'flex flex-col gap-3 rounded-md border border-[var(--color-brand)] bg-[var(--color-brand-subtle)] p-3 sm:flex-row sm:items-center sm:justify-between'
+                        : 'flex flex-col gap-3 rounded-md border border-[var(--color-border-default)] bg-white p-3 sm:flex-row sm:items-center sm:justify-between'
                     }
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        {config.active && <CheckCircle2 className="h-4 w-4 text-[#5d7b4d]" />}
-                        <p className="font-medium text-[#33402a]">{config.name}</p>
-                        <span className="rounded-full bg-[#e9efde] px-2 py-0.5 text-[11px] uppercase text-[#506141]">
+                        {config.active && <CheckCircle2 className="h-4 w-4 text-[var(--color-brand)]" />}
+                        <p className="font-medium text-[var(--color-fg-default)]">{config.name}</p>
+                        <span className="rounded bg-[var(--color-bg-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-fg-secondary)]">
                           {config.provider}
                         </span>
                       </div>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">{config.model}</p>
+                      <p className="mt-1 truncate text-xs text-[var(--color-fg-tertiary)]">{config.model}</p>
                       {config.baseUrl && (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        <p className="mt-0.5 truncate text-xs text-[var(--color-fg-tertiary)]">
                           {config.baseUrl}
                         </p>
                       )}
@@ -499,9 +500,8 @@ export function SettingsPage(): React.JSX.Element {
                       placeholder={t('settings.timeoutPlaceholder')}
                       value={timeoutSeconds[field.profile]}
                       onChange={(e) => handleTimeoutChange(field.profile, e.target.value)}
-                      className="h-10"
                     />
-                    <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                    <p className="mt-1 text-[11px] leading-snug text-[var(--color-fg-tertiary)]">
                       {field.hint}
                     </p>
                   </div>
@@ -520,16 +520,16 @@ export function SettingsPage(): React.JSX.Element {
 
       {modelDialogOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d291f]/42 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-bg-overlay)] p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !savingModel) {
               setModelDialogOpen(false)
             }
           }}
         >
-          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-[#d8ccb5]/85 bg-[#fffaf1] shadow-[0_24px_70px_rgba(53,44,32,0.28)]">
-            <div className="flex items-center justify-between border-b border-[#e3d8c5] px-5 py-4">
-              <h2 className="text-base font-semibold text-[#33402a]">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-[var(--color-border-default)] bg-white shadow-[var(--elevation-popover)]">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-default)] px-5 py-4">
+              <h2 className="text-base font-semibold text-[var(--color-fg-default)]">
                 {modelForm.id ? t('settings.editModel') : t('settings.addModel')}
               </h2>
               <Button
@@ -545,61 +545,61 @@ export function SettingsPage(): React.JSX.Element {
             <div className="space-y-3 p-5">
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
+                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">
                     {t('settings.modelName')}
                   </label>
                   <Input
                     value={modelForm.name}
                     onChange={(e) => updateModelForm({ name: e.target.value })}
                     placeholder={t('settings.modelNamePlaceholder')}
-                    className="h-8"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
+                  <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">
                     {t('settings.providerPreset')}
                   </label>
                   <Select
                     value={modelForm.provider}
                     onValueChange={(value) =>
-                      updateModelForm({ provider: value === 'anthropic' ? 'anthropic' : 'openai' })
+                      updateModelForm({
+                        provider: value === 'anthropic' || value === 'google' ? value : 'openai'
+                      })
                     }
                   >
-                    <SelectTrigger className="h-8">
+                    <SelectTrigger>
                       <SelectValue placeholder={t('settings.providerPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="anthropic">Claude (Anthropic)</SelectItem>
                       <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="google">Google Gemini</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">model</label>
+                <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">{t('settings.modelField')}</label>
                 <Input
                   placeholder={t('settings.modelPlaceholder')}
                   value={modelForm.model}
                   onChange={(e) => updateModelForm({ model: e.target.value })}
-                  className="h-8"
                 />
-                <p className="mt-1 text-xs text-muted-foreground">{t('settings.modelHint')}</p>
+                <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">{t('settings.modelHint')}</p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">base_url</label>
+                <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">{t('settings.baseUrlField')}</label>
                 <Input
                   placeholder={t('settings.baseUrlPlaceholder')}
                   value={modelForm.baseUrl}
                   onChange={(e) => updateModelForm({ baseUrl: e.target.value })}
-                  className="h-8"
                 />
-                <p className="mt-1 text-xs text-muted-foreground">{t('settings.baseUrlHint')}</p>
+                <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">{t('settings.baseUrlHint')}</p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">max_tokens</label>
+                <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">{t('settings.maxTokensField')}</label>
                 <Input
                   type="number"
                   min={256}
@@ -607,13 +607,12 @@ export function SettingsPage(): React.JSX.Element {
                   step={256}
                   value={modelForm.maxTokens}
                   onChange={(e) => updateModelForm({ maxTokens: Math.max(256, Math.min(16384, Number(e.target.value) || 4096)) })}
-                  className="h-8"
                 />
-                <p className="mt-1 text-xs text-muted-foreground">{t('settings.maxTokensHint')}</p>
+                <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">{t('settings.maxTokensHint')}</p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">api_key</label>
+                <label className="mb-1 block text-sm font-medium text-[var(--color-fg-default)]">{t('settings.apiKeyField')}</label>
                 <div className="flex gap-2">
                   <Input
                     type="password"
@@ -622,23 +621,24 @@ export function SettingsPage(): React.JSX.Element {
                     })}
                     value={modelForm.apiKey}
                     onChange={(e) => updateModelForm({ apiKey: e.target.value })}
-                    className="h-8 min-w-0 flex-1"
+                    className="min-w-0 flex-1"
                   />
                   <Button
-                    variant="secondary"
+                    variant="outline"
+                    size="md"
                     onClick={handleVerify}
                     disabled={verifying}
-                    className="h-8 min-w-[80px] shrink-0 rounded-lg border border-[#7ea06f]/45 px-3 text-xs"
+                    className="shrink-0"
                   >
-                    <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                    <ShieldCheck className="h-3.5 w-3.5" />
                     {verifying ? t('settings.verifying') : t('settings.verify')}
                   </Button>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{t('settings.verifyHint')}</p>
+                <p className="mt-1 text-xs text-[var(--color-fg-tertiary)]">{t('settings.verifyHint')}</p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-[#e3d8c5] px-5 py-4">
+            <div className="flex justify-end gap-2 border-t border-[var(--color-border-default)] px-5 py-4">
               <Button
                 type="button"
                 variant="ghost"

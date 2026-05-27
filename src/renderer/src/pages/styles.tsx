@@ -25,7 +25,7 @@ type StyleSummary = {
   updatedAt?: number
 }
 
-const localAssetUrl = (filePath: string): string => `local-asset://${encodeURI(filePath)}`
+const localAssetUrl = (filePath: string): string => `local-asset://${encodeURIComponent(filePath)}`
 
 export function StylesPage(): React.JSX.Element {
   const navigate = useNavigate()
@@ -58,7 +58,7 @@ export function StylesPage(): React.JSX.Element {
         <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{t('styles.eyebrow')}</p>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="organic-serif text-[32px] font-semibold leading-none text-[#3e4a32]">{t('styles.title')}</h1>
+            <h1 className="my-style-h1-spaceholder text-[32px] font-semibold leading-none text-[var(--color-fg-default)]">{t('styles.title')}</h1>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
             <Button size="sm" className="min-w-[112px]" onClick={() => navigate('/styles/new')}>
@@ -67,13 +67,13 @@ export function StylesPage(): React.JSX.Element {
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">{t('styles.description')}</p>
+        <p className="mt-2 text-[12px] text-muted-foreground">{t('styles.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {styles.map((style) => (
           <Popover key={style.id}>
-            <Card className="group !rounded-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(88,75,56,0.18)]">
+            <Card className="group !rounded-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(16,24,40,0.10)]">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center justify-between text-base">
                   <span className="truncate transition-colors duration-200 group-hover:text-foreground">{style.label}</span>
@@ -104,7 +104,7 @@ export function StylesPage(): React.JSX.Element {
               </CardHeader>
               <CardContent>
                 {style.styleCase && (
-                  <span className="mb-2 inline-block rounded-md border border-[#d6c08d]/80 bg-[#fff7e8] px-1.5 py-0.5 text-xs font-medium text-[#7c6a4c]">
+                  <span className="mb-2 inline-block rounded-md border border-[#fed7aa]/80 bg-[var(--color-bg-subtle)] px-1.5 py-0.5 text-xs font-medium text-[var(--color-fg-tertiary)]">
                     {style.styleCase}
                   </span>
                 )}
@@ -121,12 +121,13 @@ export function StylesPage(): React.JSX.Element {
                 side="right"
                 align="start"
                 sideOffset={12}
-                className="overflow-hidden rounded-lg p-0"
+                className="w-auto overflow-hidden rounded-lg border border-[var(--color-border-default)]/80 bg-[#ffffff] p-2 shadow-[0_18px_44px_rgba(16,24,40,0.12)] data-[state=closed]:animate-none data-[state=open]:animate-none"
               >
-                <div className="aspect-video w-[520px] max-w-[72vw] bg-black">
+                <div className="relative aspect-video w-[380px] overflow-hidden rounded-md border border-[#e3dac8] bg-white">
                   <iframe
                     src={localAssetUrl(style.previewPath)}
-                    className="block h-full w-full border-0"
+                    className="absolute left-0 top-0 h-[900px] w-[1600px] origin-top-left border-0 bg-white"
+                    style={{ transform: 'scale(0.2375)' }}
                     title={`${style.label} preview`}
                   />
                 </div>

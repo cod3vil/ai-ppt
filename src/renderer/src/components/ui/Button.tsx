@@ -6,26 +6,35 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg'
 }
 
-export function Button({ className, variant = 'default', size = 'md', ...props }: ButtonProps): React.JSX.Element {
+export function Button({
+  className,
+  variant = 'default',
+  size = 'md',
+  ...props
+}: ButtonProps): React.JSX.Element {
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-lg font-medium leading-none transition-all',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium leading-none transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)] focus-visible:ring-offset-0',
         'disabled:pointer-events-none disabled:opacity-50',
         '[&_svg]:shrink-0',
-        'cursor-pointer',
         {
-          'bg-gradient-to-r from-[#6f8159] to-[#4f613f] text-white shadow-lg shadow-[#5d6b4d]/30 hover:shadow-xl hover:shadow-[#5d6b4d]/40': variant === 'default',
-          'bg-gradient-to-r from-[#8fbc8f] to-[#6f8f64] text-[#2f3b28] shadow-lg shadow-[#7da77f]/30 hover:shadow-xl hover:shadow-[#7da77f]/40': variant === 'secondary',
-          'bg-gradient-to-r from-[#c97a64] to-[#b15a58] text-white shadow-lg shadow-[#b15a58]/30 hover:shadow-xl hover:shadow-[#b15a58]/40': variant === 'destructive',
-          'soft-btn text-foreground': variant === 'outline',
-          'bg-transparent text-muted-foreground hover:bg-[#ebe4d6]/80 hover:text-accent-foreground shadow-none': variant === 'ghost',
+          'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)]':
+            variant === 'default',
+          'bg-[var(--color-bg-muted)] text-[var(--color-fg-default)] hover:bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)]':
+            variant === 'secondary',
+          'bg-[var(--color-danger)] text-white hover:brightness-95 active:brightness-90':
+            variant === 'destructive',
+          'border border-[var(--color-border-default)] bg-white text-[var(--color-fg-default)] hover:bg-[var(--color-bg-subtle)] hover:border-[var(--color-border-strong)]':
+            variant === 'outline',
+          'bg-transparent text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)]':
+            variant === 'ghost'
         },
         {
-          'h-9 px-4 text-sm': size === 'sm',
-          'h-11 px-5 text-sm': size === 'md',
-          'h-12 px-7 text-base': size === 'lg',
+          'h-7 px-2.5 text-xs': size === 'sm',
+          'h-8 px-3 text-sm': size === 'md',
+          'h-10 px-4 text-sm': size === 'lg'
         },
         className
       )}

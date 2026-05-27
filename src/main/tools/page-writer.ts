@@ -203,40 +203,22 @@ export const FIT_SCRIPT = `<script id="ppt-page-fit">
 })();
 </script>`
 
-export const VIDEO_AUTOPLAY_SCRIPT = `<script id="ppt-video-autoplay">
+export const VIDEO_INTERACTION_SCRIPT = `<script id="ppt-video-interaction">
 (() => {
-  const playVideos = () => {
+  const prepareVideos = () => {
     document.querySelectorAll("video").forEach((video) => {
-      video.muted = true;
-      video.defaultMuted = true;
-      video.autoplay = true;
-      video.loop = true;
       video.playsInline = true;
-      video.preload = "auto";
-      video.removeAttribute("controls");
-      const attempt = () => {
-        const result = video.play();
-        if (result && typeof result.catch === "function") {
-          result.catch(() => {});
-        }
-      };
-      if (video.readyState >= 2) {
-        attempt();
-      } else {
-        video.addEventListener("canplay", attempt, { once: true });
-        video.load();
+      if (!video.hasAttribute("preload")) {
+        video.preload = "metadata";
       }
     });
   };
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", playVideos, { once: true });
+    document.addEventListener("DOMContentLoaded", prepareVideos, { once: true });
   } else {
-    playVideos();
+    prepareVideos();
   }
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) playVideos();
-  });
-  window.addEventListener("pageshow", playVideos);
+  window.addEventListener("pageshow", prepareVideos);
 })();
 </script>`
 
@@ -267,17 +249,52 @@ const DEFAULT_MOTION_SCRIPT = `<script id="ppt-default-motion">
     });
   }
 
-  function runMotion() {
-    const root = document.querySelector(".ppt-page-root");
-    if (!root) return;
-    const targets = Array.from(
+
+  function runDataAnimMotion(root) {
+    var pptApi = globalThis.PPT;
+    if (!pptApi || typeof pptApi.scanDataAnim !== "function") return false;
+    var config = pptApi.scanDataAnim(root);
+    if (!config || (!config.load.length && !config.click.length)) return false;
+
+    // Execute load-triggered animations
+    if (config.load.length > 0 && typeof pptApi.executeDataAnim === "function") {
+      pptApi.executeDataAnim(config.load);
+    }
+
+    // Wire click-triggered animations
+    if (config.click.length > 0 && pptApi.clicks && typeof pptApi.clicks.on === "function") {
+      var clickDefs = config.click;
+      clickDefs.forEach(function (animDef, idx) {
+        var clickNum = idx + 1;
+        pptApi.clicks.on(clickNum, function () {
+          var single = [animDef];
+          if (typeof pptApi.executeDataAnim === "function") {
+            pptApi.executeDataAnim(single);
+          } else {
+            // Fallback: direct animate
+            pptApi.animate(animDef.targets, {
+              opacity: [0, 1],
+              translateY: [20, 0],
+              duration: animDef.duration,
+              easing: animDef.easing
+            });
+          }
+        });
+      });
+    }
+
+    return true;
+  }
+
+  function runLegacyMotion(root) {
+    var targets = Array.from(
       root.querySelectorAll(".opacity-0, [data-anime], [data-animate], h1, h2, h3, p, li, .card, .panel, .text-section, .diagram-section, .timeline-node, section, section > *")
     ).slice(0, 16);
     if (targets.length === 0) {
       revealFallback(root);
       return;
     }
-    const pptApi = globalThis.PPT;
+    var pptApi = globalThis.PPT;
     if (pptApi && typeof pptApi.animate === "function") {
       try {
         pptApi.animate(targets, {
@@ -285,27 +302,35 @@ const DEFAULT_MOTION_SCRIPT = `<script id="ppt-default-motion">
           translateY: [20, 0],
           easing: "easeOutCubic",
           duration: 560,
-          delay: (_el, i) => i * 45,
+          delay: function (_el, i) { return i * 45; },
         });
-        // If custom animation failed and left nodes hidden, force visibility once.
-        window.setTimeout(() => revealFallback(root), 720);
+        window.setTimeout(function () { revealFallback(root); }, 720);
         return;
       } catch (_err) {
         revealFallback(root);
         return;
       }
     }
-    targets.forEach((el, i) => {
-      const node = el;
+    targets.forEach(function (el, i) {
+      var node = el;
       node.style.opacity = "0";
       node.style.transform = "translateY(14px)";
       node.style.transition = "opacity 420ms ease, transform 420ms ease";
-      window.setTimeout(() => {
+      window.setTimeout(function () {
         node.style.opacity = "1";
         node.style.transform = "translateY(0)";
       }, i * 40);
     });
     revealFallback(root);
+  }
+
+  function runMotion() {
+    var root = document.querySelector(".ppt-page-root");
+    if (!root) return;
+    // Prefer declarative data-anim over legacy selectors
+    if (!runDataAnimMotion(root)) {
+      runLegacyMotion(root);
+    }
   }
 
   if (document.readyState === "loading") {
@@ -487,18 +512,32 @@ function isMarginUtilityClass(cls: string): boolean {
   return /^-?m[trblxy]?-[^\s]+$/.test(classBaseName(cls))
 }
 
-function hasConcreteChartHeightClass(classes: Iterable<string>): boolean {
+function hasFixedChartHeightClass(classes: Iterable<string>): boolean {
   return Array.from(classes).some((cls) => {
     const base = classBaseName(cls)
-    if (/^(?:h|min-h)-(?:full|screen|dvh|svh|lvh|auto)$/.test(base)) return false
-    return /^(?:h|min-h)-(?:\[[^\]]+\]|(?!0\b)\d+)/.test(base)
+    if (/^h-(?:full|screen|dvh|svh|lvh|auto)$/.test(base)) return false
+    return /^h-(?:\[[^\]]+\]|(?!0\b)\d+)/.test(base)
   })
 }
 
-function hasConcreteChartHeightStyle(styleRaw: string): boolean {
-  return /(?:^|;)\s*(?:height|min-height)\s*:\s*(?!\s*(?:auto|0(?:px|rem|em|%)?|100%|inherit|initial|unset)\b)[^;]+/i.test(
+function isUnstableChartFrameLayoutClass(cls: string): boolean {
+  const base = classBaseName(cls)
+  return (
+    base === 'flex-1' ||
+    /^h-(?:full|screen|dvh|svh|lvh|auto)$/.test(base) ||
+    /^min-h-(?:full|screen|dvh|svh|lvh|auto)$/.test(base) ||
+    /^max-h-/.test(base)
+  )
+}
+
+function hasFixedChartHeightStyle(styleRaw: string): boolean {
+  return /(?:^|;)\s*height\s*:\s*(?!\s*(?:auto|0(?:px|rem|em|%)?|100%|inherit|initial|unset)\b)[^;]+/i.test(
     styleRaw
   )
+}
+
+function hasDataAnim(html: string): boolean {
+  return /\bdata-anim\b/i.test(html)
 }
 
 function hasCustomPageAnimation(html: string): boolean {
@@ -557,14 +596,19 @@ function preprocessPageHtml(html: string): string {
       if (!parent.length) return
 
       const parentClassRaw = (parent.attr('class') || '').trim()
-      const parentClassSet = new Set(parentClassRaw.split(/\s+/).filter(Boolean))
+      const originalParentClasses = splitClassNames(parentClassRaw)
       const parentStyle = parent.attr('style') || ''
-      const hasHeightClass = hasConcreteChartHeightClass(parentClassSet)
+      const hasFixedHeightStyle = hasFixedChartHeightStyle(parentStyle)
+      const hasFixedHeightClass = hasFixedChartHeightClass(originalParentClasses)
+      const parentClassSet = new Set(
+        originalParentClasses.filter((cls) => !isUnstableChartFrameLayoutClass(cls))
+      )
 
-      if (!hasHeightClass && !hasConcreteChartHeightStyle(parentStyle)) {
+      if (!hasFixedHeightClass && !hasFixedHeightStyle) {
         parentClassSet.add(CHART_FRAME_DEFAULT_HEIGHT_CLASS)
       }
 
+      if (!parentClassSet.has('ppt-chart-frame')) parentClassSet.add('ppt-chart-frame')
       if (!parentClassSet.has('relative')) parentClassSet.add('relative')
       if (!parentClassSet.has('overflow-hidden')) parentClassSet.add('overflow-hidden')
       if (wrapperClasses.length > 0) {
@@ -573,15 +617,14 @@ function preprocessPageHtml(html: string): string {
       parent.attr('class', Array.from(parentClassSet).join(' '))
     })
 
-    // 3. Normalize embedded videos for kiosk-style slide playback.
+    // 3. Normalize embedded videos for click-to-play slide playback.
     $('video').each((_, node) => {
       const video = $(node)
-      video.removeAttr('controls')
-      video.attr('autoplay', '')
-      video.attr('muted', '')
-      video.attr('loop', '')
+      video.attr('controls', '')
       video.attr('playsinline', '')
-      video.attr('preload', 'auto')
+      if (video.attr('preload') === undefined) {
+        video.attr('preload', 'metadata')
+      }
     })
 
     // 4. Strip unsafe hidden states (opacity-0, visibility:hidden)
@@ -646,10 +689,80 @@ const normalizeAndInjectPageRuntime = (
   return buildScaffoldDocument({
     pageId,
     innerContent: fragment,
-    includeDefaultMotion: !hasCustomPageAnimation(content),
+    includeDefaultMotion: hasDataAnim(content) || !hasCustomPageAnimation(content),
     projectDir,
     designFonts
   }).then(syncRootBackgroundFromScaffold)
+}
+
+type HtmlContentValidation = ReturnType<typeof validateHtmlContent>
+
+const STRUCTURAL_FRAGMENT_ERROR_RE =
+  /HTML 末尾存在未闭合标签|开闭标签数量不一致|闭标签多于开标签|缺少结尾|缺少 <\/body>/i
+
+function trimTrailingPartialTag(content: string): string {
+  const trimmed = content.trim()
+  if (!/<[^>]*$/.test(trimmed)) return trimmed
+  return trimmed.replace(/<[^>]*$/, '').trim()
+}
+
+function repairMalformedCreativeFragment(content: string): string | null {
+  const repairInput = trimTrailingPartialTag(content)
+  if (!repairInput) return null
+  try {
+    const $ = cheerio.load(repairInput, { scriptingEnabled: false }, false)
+    const repaired = ($.root().html() || repairInput).trim()
+    return repaired && repaired !== content.trim() ? repaired : null
+  } catch {
+    return null
+  }
+}
+
+function countHtmlTag(content: string, tagName: string): { open: number; close: number } {
+  const withoutNonStructuralBlocks = content
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+  return {
+    open: (withoutNonStructuralBlocks.match(new RegExp(`<${tagName}[\\s>]`, 'gi')) || []).length,
+    close: (withoutNonStructuralBlocks.match(new RegExp(`</${tagName}>`, 'gi')) || []).length
+  }
+}
+
+function validateOrRepairHtmlContent(content: string): {
+  content: string
+  validation: HtmlContentValidation
+  repaired: boolean
+  originalErrors?: string[]
+} {
+  const validation = validateHtmlContent(content)
+  if (validation.valid) {
+    return { content, validation, repaired: false }
+  }
+
+  const onlyStructuralErrors = validation.errors.every((error) =>
+    STRUCTURAL_FRAGMENT_ERROR_RE.test(error)
+  )
+  if (!onlyStructuralErrors) {
+    return { content, validation, repaired: false }
+  }
+
+  const repairedContent = repairMalformedCreativeFragment(content)
+  if (!repairedContent) {
+    return { content, validation, repaired: false }
+  }
+
+  const repairedValidation = validateHtmlContent(repairedContent)
+  if (!repairedValidation.valid) {
+    return { content, validation: repairedValidation, repaired: false }
+  }
+
+  return {
+    content: repairedContent,
+    validation: repairedValidation,
+    repaired: true,
+    originalErrors: validation.errors
+  }
 }
 
 async function buildScaffoldDocument(args: {
@@ -682,7 +795,7 @@ async function buildScaffoldDocument(args: {
       </div>
     </main>
     ${FIT_SCRIPT}
-    ${VIDEO_AUTOPLAY_SCRIPT}
+    ${VIDEO_INTERACTION_SCRIPT}
     ${motionScript}
   </body>
 </html>`
@@ -795,7 +908,8 @@ export function createPageWriteTools(args: {
         ].join('\n')
       )
     }
-    const validation = validateHtmlContent(content)
+    const preparedContent = validateOrRepairHtmlContent(content)
+    const { validation } = preparedContent
     if (!validation.valid) {
       emitNormalizedToolStatus(config, {
         label: `验证失败 ${resolvedPageId}`,
@@ -806,6 +920,23 @@ export function createPageWriteTools(args: {
       throw new Error(
         `HTML 验证失败 (${resolvedPageId}): ${validation.errors.join('; ')}。请修正后重试。`
       )
+    }
+    if (preparedContent.repaired) {
+      const divCount = countHtmlTag(content, 'div')
+      log.info('[deepagent] repaired malformed page fragment before write', {
+        sessionId: context.sessionId,
+        pageId: resolvedPageId,
+        mode: context.mode || 'generate',
+        editScope: context.editScope ?? null,
+        provider: context.provider || '',
+        model: context.model || '',
+        selectedPageId: context.selectedPageId ?? null,
+        contentLength: content.length,
+        repairedContentLength: preparedContent.content.length,
+        divOpenCount: divCount.open,
+        divCloseCount: divCount.close,
+        originalErrors: preparedContent.originalErrors || []
+      })
     }
     const targetPath = context.pageFileMap[resolvedPageId]
     if (!targetPath) {
@@ -822,15 +953,12 @@ export function createPageWriteTools(args: {
       agentName
     })
     const result = await serializedWrite(context.projectDir, async () => {
-      if (!context.designContract?.titleFont || !context.designContract?.bodyFont) {
-        throw new Error('design contract 缺少 titleFont/bodyFont，无法写入页面字体。')
-      }
       const designFonts = {
-        titleFont: context.designContract.titleFont,
-        bodyFont: context.designContract.bodyFont
+        titleFont: context.designContract?.titleFont || 'Inter',
+        bodyFont: context.designContract?.bodyFont || 'Inter'
       }
       const normalized = await normalizeAndInjectPageRuntime(
-        content,
+        preparedContent.content,
         resolvedPageId,
         context.projectDir,
         designFonts

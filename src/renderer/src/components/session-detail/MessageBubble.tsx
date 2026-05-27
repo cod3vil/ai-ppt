@@ -36,18 +36,18 @@ export function MessageBubble({
     <div className={cn('flex w-full min-w-0', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'min-w-0 overflow-hidden rounded-[1.15rem] border px-3 py-2 shadow-[0_6px_14px_rgba(74,59,42,0.08)]',
+          'min-w-0 overflow-hidden rounded-[1.15rem] border px-3 py-2 shadow-[0_6px_14px_rgba(16,24,40,0.06)]',
           selectorText ? 'w-full max-w-[238px]' : 'w-fit max-w-[238px]',
           isUser
-            ? 'border-[#d6e3c8]/78 bg-[#fbfef6]/90 text-[#34402c]'
-            : 'border-[#ded2bd]/78 bg-[#fffaf1]/88 text-[#3f372b]'
+            ? 'border-[#d6e3c8]/78 bg-[#ffffff]/90 text-[var(--color-fg-default)]'
+            : 'border-[var(--color-border-default)]/78 bg-[#ffffff]/88 text-[#3f372b]'
         )}
       >
         <div className="space-y-1">
           {isUser && selectorText && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex w-full min-w-0 items-center overflow-hidden rounded-full border border-[#c7d9b4]/62 bg-[#e6f1dc]/72 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[#4b5f3b]">
+                <div className="flex w-full min-w-0 items-center overflow-hidden rounded-full border border-[var(--color-brand-subtle)]/62 bg-[var(--color-brand-subtle)]/72 px-1.5 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[var(--color-fg-secondary)]">
                   <span className="mr-1 shrink-0">{t('sessionDetail.selectorBadge')}</span>
                   <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-normal tracking-normal">
                     {selectorText}
@@ -64,7 +64,7 @@ export function MessageBubble({
               {mediaPaths.map((mediaPath) => (
                 <Tooltip key={mediaPath}>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#c7d9b4]/62 bg-[#e6f1dc]/72 px-1.5 py-0.5 text-[10px] font-medium text-[#4b5f3b]">
+                    <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-[var(--color-brand-subtle)]/62 bg-[var(--color-brand-subtle)]/72 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-fg-secondary)]">
                       {mediaPath.startsWith('./videos/') ? (
                         <Video className="h-3 w-3 shrink-0" />
                       ) : (

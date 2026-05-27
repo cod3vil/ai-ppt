@@ -5,10 +5,11 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   return (
     <input
       className={cn(
-        'soft-input flex h-11 w-full rounded-lg px-4 py-2 text-sm text-foreground',
-        'ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium',
-        'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2',
-        'focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+        'flex h-8 w-full rounded-md border border-[var(--color-border-default)] bg-white px-3 py-1 text-sm text-[var(--color-fg-default)] transition-colors',
+        'file:border-0 file:bg-transparent file:text-sm file:font-medium',
+        'placeholder:text-[var(--color-fg-tertiary)]',
+        'focus-visible:outline-none focus-visible:border-[var(--color-brand)] focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)]',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--color-bg-muted)]',
         className
       )}
       {...props}
@@ -16,13 +17,17 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   )
 }
 
-export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({
+  className,
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       className={cn(
-        'soft-input flex min-h-[80px] w-full rounded-lg px-4 py-3 text-sm text-foreground',
-        'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2',
-        'focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+        'flex min-h-[72px] w-full rounded-md border border-[var(--color-border-default)] bg-white px-3 py-2 text-sm text-[var(--color-fg-default)] transition-colors',
+        'placeholder:text-[var(--color-fg-tertiary)]',
+        'focus-visible:outline-none focus-visible:border-[var(--color-brand)] focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)]',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--color-bg-muted)]',
         className
       )}
       {...props}

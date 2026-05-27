@@ -3,6 +3,7 @@ import type { PPTDatabase } from '../db/database'
 import type { AgentManager } from '../agent'
 import { createIpcContext } from './context'
 import { registerSessionHandlers } from './session/session-handlers'
+import { registerSessionImportHandlers } from './session/session-import-handlers'
 import { registerAssetHandlers, registerLocalAssetProtocol } from './io/assets-handlers'
 import { registerGenerationHandlers } from './engine/generation-handlers'
 import { registerExportHandlers } from './io/export-handlers'
@@ -17,6 +18,7 @@ import { registerDocumentParseHandlers } from './io/document-parse-handlers'
 import { registerPptxImportHandlers } from './io/pptx-import-handlers'
 import { registerHistoryHandlers } from './history/history-handlers'
 import { registerPresentationHandlers } from './session/presentation-handlers'
+import { registerTemplateHandlers } from './templates/template-handlers'
 
 export { registerLocalAssetProtocol }
 
@@ -28,6 +30,7 @@ export function setupIPC(
   const context = createIpcContext(mainWindow, db, agentManager)
 
   registerSessionHandlers(context)
+  registerSessionImportHandlers(context)
   registerPageManagementHandlers(context)
   registerAssetHandlers(context)
   registerGenerationHandlers(context)
@@ -42,4 +45,5 @@ export function setupIPC(
   registerPptxImportHandlers(context)
   registerHistoryHandlers(context)
   registerPresentationHandlers(context)
+  registerTemplateHandlers(context)
 }

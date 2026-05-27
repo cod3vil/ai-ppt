@@ -69,6 +69,22 @@ const buildPngFileName = (pageNumber: number, title: string | undefined): string
   return `${paddedNumber}-${sanitizedTitle}.png`
 }
 
+const collectDirectoryZipFiles = (
+  dir: string,
+  prefix: string,
+  zipFiles: Record<string, Uint8Array>
+): void => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name)
+    const zipPath = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      collectDirectoryZipFiles(fullPath, zipPath, zipFiles)
+    } else if (entry.isFile()) {
+      zipFiles[zipPath] = fs.readFileSync(fullPath)
+    }
+  }
+}
+
 export function registerExportHandlers(ctx: IpcContext): void {
   const {
     mainWindow,
@@ -90,8 +106,8 @@ export function registerExportHandlers(ctx: IpcContext): void {
     const sessionTitle =
       typeof session.title === 'string' && session.title.trim().length > 0
         ? session.title.trim()
-        : `ai-ppt-${sessionId}`
-    const sanitizedBaseName = sanitizeExportBaseName(sessionTitle, `ai-ppt-${sessionId}`)
+        : `ohmyppt-${sessionId}`
+    const sanitizedBaseName = sanitizeExportBaseName(sessionTitle, `ohmyppt-${sessionId}`)
 
     const ownerWindow =
       BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getFocusedWindow() ?? mainWindow
@@ -186,7 +202,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
     }
 
     const outputParentDir = directoryResult.filePaths[0]
-    const outputDir = path.join(outputParentDir, `ai-ppt-export-image_${nanoid(8)}`)
+    const outputDir = path.join(outputParentDir, `ohmyppt-export-image_${nanoid(8)}`)
     const warnings: string[] = []
 
     try {
@@ -251,11 +267,11 @@ export function registerExportHandlers(ctx: IpcContext): void {
     const sessionTitle =
       typeof session.title === 'string' && session.title.trim().length > 0
         ? session.title.trim()
-        : `ai-ppt-${sessionId}`
+        : `ohmyppt-${sessionId}`
     const prefix = imageOnly ? '【Image】' : '【Edit】'
     const sanitizedBaseName = sanitizeExportBaseName(
       `${prefix}${sessionTitle}`,
-      `ai-ppt-${sessionId}`
+      `ohmyppt-${sessionId}`
     )
 
     const ownerWindow =
@@ -328,7 +344,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
       try {
         await writeHtmlToPptx(saveResult.filePath, {
           title: sessionTitle,
-          author: 'AI-PPT',
+          author: 'OhMyPPT',
           slides,
           embeddedFonts: embeddedFonts.length > 0 ? embeddedFonts : undefined
         })
@@ -342,7 +358,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
         embeddedFonts = []
         await writeHtmlToPptx(saveResult.filePath, {
           title: sessionTitle,
-          author: 'AI-PPT',
+          author: 'OhMyPPT',
           slides
         })
       }
@@ -422,7 +438,7 @@ export function registerExportHandlers(ctx: IpcContext): void {
       }
 
       // Create output folder
-      const outputFolder = path.join(outputParentDir, `ai-ppt-${nanoid(8)}`)
+      const outputFolder = path.join(outputParentDir, `ohmyppt-${nanoid(8)}`)
       fs.mkdirSync(outputFolder, { recursive: true })
 
       log.info('[export:slidePack] starting', { sessionId, projectDir, outputFolder })
@@ -523,6 +539,70 @@ export function registerExportHandlers(ctx: IpcContext): void {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       log.error('[export:slidePack] failed', { sessionId, message })
+      throw error
+    }
+  })
+
+  ipcMain.handle('export:sessionZip', async (event, payload: unknown) => {
+    const sessionId = parseSessionId(payload)
+    if (!sessionId) throw new Error('Missing sessionId')
+
+    try {
+      const { session, projectDir } = await resolveSessionPageFiles(sessionId)
+      const rawTitle =
+        typeof session.title === 'string' && session.title.trim()
+          ? session.title.trim()
+          : `ohmyppt-${sessionId}`
+      const sessionName = sanitizeExportBaseName(rawTitle, `ohmyppt-${sessionId}`)
+
+      const ownerWindow =
+        BrowserWindow.fromWebContents(event.sender) ??
+        BrowserWindow.getFocusedWindow() ??
+        mainWindow
+      const saveResult = await dialog.showSaveDialog(ownerWindow, {
+        title: '导出 ZIP 会话文件包',
+        defaultPath: path.join(path.dirname(projectDir), `${sessionName}-session.zip`),
+        filters: [{ name: 'ZIP', extensions: ['zip'] }],
+        properties: ['createDirectory', 'showOverwriteConfirmation']
+      })
+      if (saveResult.canceled || !saveResult.filePath) {
+        return { success: false, cancelled: true }
+      }
+
+      if (await isSameOrChildPath(saveResult.filePath, projectDir)) {
+        throw new Error('ZIP 会话文件包不能导出到当前会话目录或其子目录，请选择会话目录外的位置。')
+      }
+
+      log.info('[export:sessionZip] starting', {
+        sessionId,
+        projectDir,
+        filePath: saveResult.filePath
+      })
+
+      const zipRootName = `ohmyppt-session-${sessionName}`
+      const zipFiles: Record<string, Uint8Array> = {}
+      collectDirectoryZipFiles(projectDir, zipRootName, zipFiles)
+      const zipData = zipSync(zipFiles)
+      await fs.promises.writeFile(saveResult.filePath, Buffer.from(zipData))
+
+      log.info('[export:sessionZip] completed', {
+        sessionId,
+        filePath: saveResult.filePath,
+        fileCount: Object.keys(zipFiles).length,
+        zipSize: zipData.byteLength
+      })
+      shell.showItemInFolder(saveResult.filePath)
+
+      return {
+        success: true,
+        cancelled: false,
+        path: saveResult.filePath,
+        pageCount: Object.keys(zipFiles).length,
+        warnings: []
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      log.error('[export:sessionZip] failed', { sessionId, message })
       throw error
     }
   })

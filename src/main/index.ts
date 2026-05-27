@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, screen, type Size } from 'electron'
-import { join } from 'path'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { existsSync, mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import log from 'electron-log/main.js'
@@ -17,7 +18,7 @@ let agentManager: AgentManager | null = null
 let isShuttingDown = false
 let isTrayEnabled = false
 
-const APP_NAME = 'AI-PPT'
+const APP_NAME = 'OhMyPPT'
 const DEFAULT_WINDOW_WIDTH = 1200
 const DEFAULT_WINDOW_HEIGHT = 780
 const BASE_MIN_WIDTH = 880
@@ -25,8 +26,9 @@ const BASE_MIN_HEIGHT = 680
 const TITLEBAR_HEIGHT = 48
 const TITLEBAR_BACKGROUND = '#f4eddf'
 const TITLEBAR_SYMBOL_COLOR = '#5d6b4d'
-const RELEASE_LATEST_API = 'https://api.github.com/repos/cod3vil/ai-ppt/releases/latest'
-const RELEASES_URL = 'https://github.com/cod3vil/ai-ppt/releases'
+const GITHUB_LATEST_RELEASE_API = 'https://api.github.com/repos/arcsin1/oh-my-ppt/releases/latest'
+const GITHUB_RELEASES_URL = 'https://github.com/arcsin1/oh-my-ppt/releases'
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {
@@ -73,7 +75,7 @@ function configureLogging(): void {
       const yearMonthDay = now.format('YYYY-MM-DD')
       return join(
         app.getPath('userData'),
-        'aippt_logs',
+        'ohmyppt_logs',
         yearMonth,
         `${yearMonthDay}-v${app.getVersion()}.log`
       )
@@ -116,9 +118,9 @@ async function fetchLatestRelease(): Promise<UpdateAvailablePayload | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 8000)
   try {
-    const response = await fetch(RELEASE_LATEST_API, {
+    const response = await fetch(GITHUB_LATEST_RELEASE_API, {
       headers: {
-        Accept: 'application/json',
+        Accept: 'application/vnd.github+json',
         'User-Agent': `${APP_NAME}/${app.getVersion()}`
       },
       signal: controller.signal
@@ -146,7 +148,7 @@ async function fetchLatestRelease(): Promise<UpdateAvailablePayload | null> {
     return {
       currentVersion,
       latestVersion,
-      releaseUrl: release.html_url || RELEASES_URL,
+      releaseUrl: release.html_url || GITHUB_RELEASES_URL,
       releaseName: release.name,
       publishedAt: release.published_at
     }
@@ -277,15 +279,15 @@ if (gotSingleInstanceLock) {
 
   app.whenReady().then(async () => {
     configureLogging()
-    electronApp.setAppUserModelId('com.github.cod3vil.aippt')
+    electronApp.setAppUserModelId('com.ohmyppt.app')
 
-    const dbPath = is.dev ? join(process.cwd(), 'ai-ppt.dev.db') : undefined
+    const dbPath = is.dev ? join(process.cwd(), 'ohmyppt.dev.db') : undefined
     db = new PPTDatabase(dbPath)
     await db.init()
     setStyleDb(db)
     log.info('[app] database initialized', {
       env: is.dev ? 'dev' : 'prod',
-      dbPath: dbPath || 'userData/ai-ppt.db',
+      dbPath: dbPath || 'userData/ohmyppt.db',
     })
     agentManager = new AgentManager(db)
 

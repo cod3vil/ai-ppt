@@ -63,6 +63,7 @@ export function MessagePanel({
   const removePendingAsset = useSessionDetailUiStore((state) => state.removePendingAsset)
   const clearSelectedElement = useSessionDetailUiStore((state) => state.clearSelectedElement)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const composingRef = useRef(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -103,18 +104,18 @@ export function MessagePanel({
     : undefined
 
   return (
-    <aside className="mr-3 my-3 flex min-h-0 w-[300px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-[#ded2bd]/60 bg-[#f3ecdf]/76 shadow-[0_20px_44px_rgba(74,59,42,0.13)] backdrop-blur-xl">
-      <div className="relative mx-2.5 mt-2.5 overflow-hidden rounded-[1.35rem] border border-[#e1d6c4]/72 bg-[#fffaf1]/78 px-3 pb-2.5 pt-3 shadow-[0_6px_16px_rgba(77,61,43,0.08)]">
-        <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[#c7d9b4]/12" />
+    <aside className="mr-3 mb-3 mt-1 flex min-h-0 w-[300px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-[var(--color-border-default)]/60 bg-[var(--color-bg-subtle)]/76 shadow-[0_14px_32px_rgba(16,24,40,0.06)] backdrop-blur-xl">
+      <div className="relative mx-2.5 mt-2.5 overflow-hidden rounded-[1.35rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/78 px-3 pb-2.5 pt-3 shadow-[0_4px_12px_rgba(77,61,43,0.06)]">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[var(--color-brand-subtle)]/12" />
         <div className="relative flex flex-col gap-2">
-          <h3 className="text-sm font-semibold tracking-[0.04em] text-[#34402c]">{t('sessionDetail.messageTitle')}</h3>
-          <div className="flex items-center justify-between gap-2 text-xs text-[#6d604d]">
+          <h3 className="text-sm font-semibold tracking-[0.04em] text-[var(--color-fg-default)]">{t('sessionDetail.messageTitle')}</h3>
+          <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-fg-tertiary)]">
             <span>{t('sessionDetail.context')}</span>
             <Select
               value={chatType}
               onValueChange={(value) => setChatType(value === 'page' ? 'page' : 'main')}
             >
-              <SelectTrigger className="h-8 w-[132px] rounded-full border-[#ded2bd]/70 bg-[#fffdf8]/82 px-3 py-1 text-xs text-[#3e4a32] shadow-[0_3px_8px_rgba(74,59,42,0.06)]">
+              <SelectTrigger className="h-8 w-[132px] rounded-full border-[var(--color-border-default)]/70 bg-[#ffffff]/82 px-3 py-1 text-xs text-[var(--color-fg-default)] shadow-none">
                 <SelectValue placeholder={t('sessionDetail.contextPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -144,8 +145,8 @@ export function MessagePanel({
             ))}
 
             {isGenerating && progress && (
-              <div className="rounded-[1.15rem] border border-[#ded2bd]/72 bg-[#fffaf1]/82 px-3 py-2 shadow-[0_6px_14px_rgba(74,59,42,0.08)]">
-                <p className="mb-2 text-sm text-[#655843]">{progress.label || t('sessionDetail.modelProcessing')}</p>
+              <div className="rounded-[1.15rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/82 px-3 py-2 shadow-[0_6px_14px_rgba(16,24,40,0.06)]">
+                <p className="mb-2 text-sm text-[var(--color-fg-secondary)]">{progress.label || t('sessionDetail.modelProcessing')}</p>
                 <Progress value={progress.progress} />
               </div>
             )}
@@ -162,8 +163,8 @@ export function MessagePanel({
 
       <div
         className={cn(
-          'mx-2.5 mb-2.5 rounded-[1.4rem] border border-[#ded2bd]/72 bg-[#fffaf1]/84 px-2.5 pb-3 pt-2 shadow-[0_12px_24px_rgba(74,59,42,0.11)] transition-colors',
-          assetDragActive && 'border-[#afc79a]/75 bg-[#f3f8ec]/88'
+          'mx-2.5 mb-2.5 rounded-[1.4rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/84 px-2.5 pb-3 pt-2 shadow-[0_12px_24px_rgba(16,24,40,0.06)] transition-colors',
+          assetDragActive && 'border-[#afc79a]/75 bg-[var(--color-bg-subtle)]/88'
         )}
         onDragEnter={(event) => {
           event.preventDefault()
@@ -184,13 +185,13 @@ export function MessagePanel({
         }}
       >
         {selectedSelector && (
-          <div className="mb-2 flex items-center gap-2 rounded-[1rem] border border-[#ded2bd]/65 bg-[#f4ebdc]/70 px-2 py-1.5">
-            <span className="shrink-0 rounded-full bg-[#dcebcf]/82 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-[#4f6340]">
+          <div className="mb-2 flex items-center gap-2 rounded-[1rem] border border-[var(--color-border-default)]/65 bg-[var(--color-bg-muted)]/70 px-2 py-1.5">
+            <span className="shrink-0 rounded-full bg-[var(--color-brand-subtle)]/82 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-[var(--color-fg-secondary)]">
               {t('sessionDetail.selectorBadge')}
             </span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-5 text-[#4f5f3f]">
+                <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-5 text-[var(--color-fg-secondary)]">
                   {selectorSummary}
                 </span>
               </TooltipTrigger>
@@ -201,7 +202,7 @@ export function MessagePanel({
             <button
               type="button"
               onClick={clearSelectedElement}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#64735a] transition-colors hover:bg-[#d4e4c1]/85 hover:text-[#3e4a32]"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#64735a] transition-colors hover:bg-[var(--color-brand-subtle)]/78 hover:text-[var(--color-fg-default)]"
               aria-label={t('sessionDetail.clearSelector')}
               title={t('sessionDetail.clearSelector')}
             >
@@ -210,7 +211,7 @@ export function MessagePanel({
           </div>
         )}
         {chatType === 'main' && (
-          <div className="mb-2 rounded-[1rem] border border-[#ded2bd]/65 bg-[#f4ebdc]/70 px-2.5 py-2 text-xs text-[#6a5c48]">
+          <div className="mb-2 rounded-[1rem] border border-[var(--color-border-default)]/65 bg-[var(--color-bg-muted)]/70 px-2.5 py-2 text-xs text-[#6a5c48]">
             {t('sessionDetail.mainDeckHint')}
           </div>
         )}
@@ -219,7 +220,7 @@ export function MessagePanel({
             {pendingAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="flex max-w-full items-center gap-1.5 rounded-full border border-[#c7d9b4]/66 bg-[#e6f1dc]/76 px-2 py-1 text-[11px] text-[#405333] shadow-[0_3px_8px_rgba(93,107,77,0.06)]"
+                className="flex max-w-full items-center gap-1.5 rounded-full border border-[var(--color-brand-subtle)]/66 bg-[var(--color-brand-subtle)]/76 px-2 py-1 text-[11px] text-[var(--color-fg-secondary)] shadow-[0_3px_8px_rgba(124,58,237,0.10)]"
                 title={`${asset.originalName}\n${asset.relativePath}`}
               >
                 {asset.mimeType.startsWith('video/') ? (
@@ -233,7 +234,7 @@ export function MessagePanel({
                 <button
                   type="button"
                   onClick={() => removePendingAsset(asset.id)}
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[#657552] hover:bg-[#c8ddb2]"
+                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[#657552] hover:bg-[var(--color-brand-subtle-hover)]"
                   aria-label={t('sessionDetail.removeAsset')}
                 >
                   <X className="h-3 w-3" />
@@ -246,15 +247,22 @@ export function MessagePanel({
           placeholder={inputPlaceholder}
           value={input}
           onChange={(event) => setInput(event.target.value)}
+          onCompositionStart={() => {
+            composingRef.current = true
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
+              if (composingRef.current || event.nativeEvent.isComposing) return
               event.preventDefault()
               onSend()
             }
           }}
           disabled={isGenerating}
           rows={4}
-          className="min-h-[96px] resize-none rounded-[1.15rem] border border-[#ded2bd]/72 bg-[#fffdf8]/88 px-3 py-2 text-[13px] leading-5 text-[#3f4b35] shadow-[inset_0_1px_2px_rgba(74,59,42,0.05)] focus-visible:border-[#9bb98a] focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[96px] resize-none rounded-[1.15rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-3 py-2 text-[13px] leading-5 text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="flex min-w-0 items-center gap-2">
@@ -263,7 +271,7 @@ export function MessagePanel({
                 <button
                   type="button"
                   disabled={isGenerating || isUploadingAssets}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[38%_62%_44%_56%/55%_45%_55%_45%] border border-[#c7d9b4]/66 bg-[#e6f1dc]/80 text-[#526942] shadow-[0_4px_10px_rgba(93,107,77,0.09)] transition-colors hover:bg-[#d7e8c8] disabled:pointer-events-none disabled:opacity-45"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[38%_62%_44%_56%/55%_45%_55%_45%] border border-[var(--color-brand-subtle)]/66 bg-[var(--color-brand-subtle)]/80 text-[#526942] shadow-[0_4px_10px_rgba(124,58,237,0.10)] transition-colors hover:bg-[var(--color-brand-subtle-hover)] disabled:pointer-events-none disabled:opacity-45"
                   aria-label={t('sessionDetail.addAsset')}
                   title={t('sessionDetail.addAsset')}
                 >
@@ -289,7 +297,7 @@ export function MessagePanel({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-5 text-[#6d604d]">
+            <div className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-5 text-[var(--color-fg-tertiary)]">
               {contextHint}
             </div>
           </div>
@@ -312,7 +320,7 @@ export function MessagePanel({
                 ((selectedSelector ? 'page' : chatType) === 'page' && !selectedPageExists)
               }
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full bg-[#5d6b4d] px-3 text-xs text-white shadow-[0_8px_18px_rgba(93,107,77,0.24)] hover:bg-[#3e4a32]"
+              className="shrink-0 whitespace-nowrap rounded-full bg-[var(--color-brand)] px-3 text-xs text-white shadow-[0_8px_18px_rgba(124,58,237,0.10)] hover:bg-[var(--color-fg-default)]"
             >
               <Send className="mr-1 h-4 w-4" />
               {t('sessionDetail.send')}

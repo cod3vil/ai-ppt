@@ -12,7 +12,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-[#1f261d]/38 backdrop-blur-sm', className)}
+    className={cn('fixed inset-0 z-50 bg-[var(--color-bg-overlay)] backdrop-blur-sm', className)}
     {...props}
   />
 ))
@@ -27,7 +27,7 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-[#d8cfbc]/80 bg-[#fffaf0] p-5 shadow-[0_24px_60px_rgba(64,52,38,0.28)]',
+        'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-[var(--color-border-default)] bg-white p-5 shadow-[var(--elevation-popover)]',
         className
       )}
       {...props}
@@ -42,7 +42,10 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn('text-base font-semibold text-[#3e4a32]', className)}
+    className={cn(
+      'text-base font-semibold leading-tight text-[var(--color-fg-default)]',
+      className
+    )}
     {...props}
   />
 ))
@@ -54,7 +57,7 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm leading-6 text-[#6f6658]', className)}
+    className={cn('text-sm leading-6 text-[var(--color-fg-secondary)]', className)}
     {...props}
   />
 ))
@@ -67,7 +70,7 @@ const AlertDialogAction = React.forwardRef<
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(
-      'inline-flex h-9 items-center justify-center rounded-[10px] px-4 text-sm font-medium transition-colors',
+      'inline-flex h-8 items-center justify-center rounded-md bg-[var(--color-brand)] px-3 text-sm font-medium text-white transition-colors hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)]',
       className
     )}
     {...props}
@@ -82,7 +85,7 @@ const AlertDialogCancel = React.forwardRef<
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
-      'inline-flex h-9 items-center justify-center rounded-[10px] border border-[#d7cbb7]/80 bg-[#fffdf8]/92 px-4 text-sm font-medium text-[#657058] transition-colors hover:bg-[#f5efe4]',
+      'inline-flex h-8 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-white px-3 text-sm font-medium text-[var(--color-fg-default)] transition-colors hover:bg-[var(--color-bg-subtle)] hover:border-[var(--color-border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)]',
       className
     )}
     {...props}

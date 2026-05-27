@@ -75,7 +75,7 @@ export class PptxTextValidator {
       }))
       const script = `
 (async () => {
-  const mod = await (window.__aipptPretextModule ||= import(${JSON.stringify(pretextModuleUrl)}));
+  const mod = await (window.__ohmypptPretextModule ||= import(${JSON.stringify(pretextModuleUrl)}));
   const inputs = ${JSON.stringify(payload)};
   const measureOne = (input) => {
     const minFontSize = Math.max(8, input.fontSize * 0.72);
@@ -165,7 +165,7 @@ export class PptxTextValidator {
         offscreen: true
       }
     })
-    this.tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'aippt-pretext-'))
+    this.tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'ohmyppt-pretext-'))
     const htmlPath = path.join(this.tempDir, 'index.html')
     await fs.promises.writeFile(htmlPath, '<!doctype html><html><body></body></html>', 'utf-8')
     await win.loadURL(pathToFileURL(htmlPath).toString())
