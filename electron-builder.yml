@@ -35,9 +35,11 @@ files:
   - '!thumb.png'
   - '!node_modules/tiktoken'
   - '!node_modules/web-streams-polyfill'
-  # Drop dev-only / non-runtime artifacts from packaged node_modules
+  # Drop dev-only / non-runtime artifacts from packaged node_modules.
+  # Do NOT match {test,tests,__tests__} via glob — some libs (e.g. langchain)
+  # ship runtime modules under nested paths like `dist/agents/tests/utils.js`.
   - '!node_modules/**/{CHANGELOG.md,README.md,readme.md,HISTORY.md,LICENSE,license,LICENSE.txt,LICENSE.md}'
-  - '!node_modules/**/{test,tests,__tests__,examples,example,docs,doc,man}/**'
+  - '!node_modules/**/{examples,example,docs,doc,man}/**'
   - '!node_modules/**/{*.d.ts,*.flow,*.markdown}'
   - '!node_modules/**/.bin/**'
   - '!node_modules/**/{appveyor.yml,.travis.yml,circle.yml,.editorconfig,.eslintrc*,.prettierrc*,tsconfig*.json,rollup.config.*,webpack.config.*}'
@@ -81,7 +83,11 @@ nsis:
   include: installer.nsh
 mac:
   icon: build/icons/icon.icns
-  identity: null
+  # Ad-hoc signing ('-' identity) so Apple Silicon Macs can launch the unsigned
+  # app without "damaged" errors. Still not notarized — users may need to
+  # right-click → Open the first time, or run:
+  #   xattr -dr com.apple.quarantine /Applications/AI-PPT.app
+  identity: '-'
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.

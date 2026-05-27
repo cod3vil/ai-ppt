@@ -107,6 +107,20 @@ function stripWrongPlatformBinaries(appOutDir, platform, arch, appName) {
   return removed
 }
 
+function adhocSignMacApp(appOutDir, appName) {
+  if (process.platform !== 'darwin') return // codesign only runs on macOS hosts
+  const { execSync } = require('child_process')
+  const appPath = path.join(appOutDir, `${appName}.app`)
+  if (!fs.existsSync(appPath)) return
+  try {
+    // --deep handles nested frameworks/helpers. -s - is ad-hoc identity.
+    execSync(`codesign --force --deep --sign - "${appPath}"`, { stdio: 'inherit' })
+    console.log('[after-pack] ad-hoc signed', appPath)
+  } catch (err) {
+    console.warn('[after-pack] ad-hoc sign failed:', err.message)
+  }
+}
+
 exports.default = async function afterPack(context) {
   const { appOutDir, packager, electronPlatformName, arch } = context
   const appName = packager.appInfo.productFilename
@@ -122,4 +136,8 @@ exports.default = async function afterPack(context) {
     stripChromiumPaks(appOutDir, electronPlatformName, appName)
   }
   stripWrongPlatformBinaries(appOutDir, electronPlatformName, archName, appName)
+
+  if (electronPlatformName === 'darwin') {
+    adhocSignMacApp(appOutDir, appName)
+  }
 }
