@@ -26,8 +26,8 @@ const BASE_MIN_HEIGHT = 680
 const TITLEBAR_HEIGHT = 48
 const TITLEBAR_BACKGROUND = '#f4eddf'
 const TITLEBAR_SYMBOL_COLOR = '#5d6b4d'
-const GITHUB_LATEST_RELEASE_API = 'https://api.github.com/repos/arcsin1/oh-my-ppt/releases/latest'
-const GITHUB_RELEASES_URL = 'https://github.com/arcsin1/oh-my-ppt/releases'
+const VERSION_CHECK_API = 'https://api.cyberran.com/Api/App/getVersion?app=aippt'
+const VERSION_DOWNLOAD_URL = 'https://api.cyberran.com/app/download/index.html?app=aippt'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
@@ -167,42 +167,47 @@ async function fetchLatestRelease(): Promise<UpdateAvailablePayload | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 8000)
   try {
-    const response = await fetch(GITHUB_LATEST_RELEASE_API, {
+    const response = await fetch(VERSION_CHECK_API, {
       headers: {
-        Accept: 'application/vnd.github+json',
+        Accept: 'application/json',
         'User-Agent': `${APP_NAME}/${app.getVersion()}`
       },
       signal: controller.signal
     })
     if (!response.ok) {
-      log.warn('[update] latest release request failed', {
+      log.warn('[update] version check request failed', {
         status: response.status,
         statusText: response.statusText
       })
       return null
     }
-    const release = (await response.json()) as {
-      tag_name?: string
-      html_url?: string
-      name?: string
-      published_at?: string
-      draft?: boolean
-      prerelease?: boolean
+    const payload = (await response.json()) as {
+      status?: number
+      info?: {
+        name?: string
+        version?: string
+        link?: string
+      }
+      url?: string
     }
-    const latestVersion = String(release.tag_name || '').trim()
+    if (payload.status !== 1) {
+      log.warn('[update] version check returned non-ok status', { status: payload.status })
+      return null
+    }
+    const latestVersion = String(payload.info?.version || '').trim()
     const currentVersion = app.getVersion()
-    if (!latestVersion || release.draft || release.prerelease) return null
+    if (!latestVersion) return null
     if (!isNewerVersion(latestVersion, currentVersion)) return null
 
     return {
       currentVersion,
       latestVersion,
-      releaseUrl: release.html_url || GITHUB_RELEASES_URL,
-      releaseName: release.name,
-      publishedAt: release.published_at
+      releaseUrl: payload.url?.trim() || payload.info?.link?.trim() || VERSION_DOWNLOAD_URL,
+      releaseName: payload.info?.name,
+      publishedAt: undefined
     }
   } catch (error) {
-    log.warn('[update] latest release check failed', {
+    log.warn('[update] version check failed', {
       message: error instanceof Error ? error.message : String(error)
     })
     return null

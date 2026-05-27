@@ -36,11 +36,12 @@ files:
   - '!node_modules/tiktoken'
   - '!node_modules/web-streams-polyfill'
   # Drop dev-only / non-runtime artifacts from packaged node_modules.
-  # Do NOT match {test,tests,__tests__} via glob — some libs (e.g. langchain)
-  # ship runtime modules under nested paths like `dist/agents/tests/utils.js`.
-  - '!node_modules/**/{CHANGELOG.md,README.md,readme.md,HISTORY.md,LICENSE,license,LICENSE.txt,LICENSE.md}'
-  - '!node_modules/**/{examples,example,docs,doc,man}/**'
-  - '!node_modules/**/{*.d.ts,*.flow,*.markdown}'
+  # NOTE: We deliberately avoid excluding directories by name (test, tests,
+  # __tests__, doc, docs, example, examples, man) — libraries like langchain
+  # and yaml ship runtime modules under those nested paths (e.g.
+  # `langchain/dist/agents/tests/utils.js`, `yaml/dist/doc/directives.js`)
+  # and the broad glob ends up breaking startup.
+  - '!node_modules/**/{*.d.ts,*.flow,*.markdown,*.map}'
   - '!node_modules/**/.bin/**'
   - '!node_modules/**/{appveyor.yml,.travis.yml,circle.yml,.editorconfig,.eslintrc*,.prettierrc*,tsconfig*.json,rollup.config.*,webpack.config.*}'
 electronLanguages:
