@@ -36,11 +36,11 @@ export function MessageBubble({
     <div className={cn('flex w-full min-w-0', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'min-w-0 overflow-hidden rounded-[1.15rem] border px-3 py-2 shadow-[0_6px_14px_rgba(16,24,40,0.06)]',
+          'min-w-0 overflow-hidden rounded-md border px-3 py-2 shadow-[var(--elevation-sm)]',
           selectorText ? 'w-full max-w-[238px]' : 'w-fit max-w-[238px]',
           isUser
             ? 'border-[#d6e3c8]/78 bg-[#ffffff]/90 text-[var(--color-fg-default)]'
-            : 'border-[var(--color-border-default)]/78 bg-[#ffffff]/88 text-[#3f372b]'
+            : 'border-[var(--color-border-default)]/78 bg-white text-[#3f372b]'
         )}
       >
         <div className="space-y-1">

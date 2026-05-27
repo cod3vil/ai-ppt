@@ -10,7 +10,6 @@ interface SessionDetailUiStore {
   selectedPageId: string | null
   consoleOpen: boolean
   previewKey: number
-  isExportingPdf: boolean
   isExportingPng: boolean
   isExportingPptx: boolean
   isExportingSlidePack: boolean
@@ -37,7 +36,6 @@ interface SessionDetailUiStore {
   setSelectedPageId: (pageId: string | null) => void
   setConsoleOpen: (open: boolean | ((open: boolean) => boolean)) => void
   bumpPreviewKey: () => void
-  setIsExportingPdf: (isExporting: boolean) => void
   setIsExportingPng: (isExporting: boolean) => void
   setIsExportingPptx: (isExporting: boolean) => void
   setIsExportingSlidePack: (isExporting: boolean) => void
@@ -73,7 +71,6 @@ export const useSessionDetailUiStore = create<SessionDetailUiStore>((set) => ({
   selectedPageId: null,
   consoleOpen: false,
   previewKey: 0,
-  isExportingPdf: false,
   isExportingPng: false,
   isExportingPptx: false,
   isExportingSlidePack: false,
@@ -103,7 +100,6 @@ export const useSessionDetailUiStore = create<SessionDetailUiStore>((set) => ({
       consoleOpen: typeof open === 'function' ? open(state.consoleOpen) : open
     })),
   bumpPreviewKey: () => set((state) => ({ previewKey: state.previewKey + 1 })),
-  setIsExportingPdf: (isExportingPdf) => set({ isExportingPdf }),
   setIsExportingPng: (isExportingPng) => set({ isExportingPng }),
   setIsExportingPptx: (isExportingPptx) => set({ isExportingPptx }),
   setIsExportingSlidePack: (isExportingSlidePack) => set({ isExportingSlidePack }),

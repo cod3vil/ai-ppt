@@ -1,5 +1,7 @@
 appId: com.github.cod3vil.aippt
 productName: AI-PPT
+compression: maximum
+afterPack: ./scripts/after-pack.cjs
 directories:
   buildResources: build
 files:
@@ -29,10 +31,19 @@ files:
   - '!**/*.tsbuildinfo'
   - '!*.db'
   - '!*.db-*'
-  - '!{ohmyppt.dev.db,ohmyppt.db,ai-ppt.dev.db,ai-ppt.db}'
+  - '!{local.dev.db,local.db,ohmyppt.dev.db,ohmyppt.db,ai-ppt.dev.db,ai-ppt.db}'
   - '!thumb.png'
   - '!node_modules/tiktoken'
   - '!node_modules/web-streams-polyfill'
+  # Drop dev-only / non-runtime artifacts from packaged node_modules
+  - '!node_modules/**/{CHANGELOG.md,README.md,readme.md,HISTORY.md,LICENSE,license,LICENSE.txt,LICENSE.md}'
+  - '!node_modules/**/{test,tests,__tests__,examples,example,docs,doc,man}/**'
+  - '!node_modules/**/{*.d.ts,*.flow,*.markdown}'
+  - '!node_modules/**/.bin/**'
+  - '!node_modules/**/{appveyor.yml,.travis.yml,circle.yml,.editorconfig,.eslintrc*,.prettierrc*,tsconfig*.json,rollup.config.*,webpack.config.*}'
+electronLanguages:
+  - en-US
+  - zh-CN
 asarUnpack:
   - resources/**
   - node_modules/@node-rs/**/*.node

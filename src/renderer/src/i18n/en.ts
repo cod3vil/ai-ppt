@@ -11,6 +11,23 @@ export const en = {
     saving: 'Saving...',
     retryLater: 'Please try again later'
   },
+  setupGate: {
+    title: 'Set API Key',
+    description:
+      'A default model is preconfigured, but it needs your API key before any generation can run.',
+    modelLabel: 'Model',
+    baseUrlLabel: 'Base URL',
+    apiKeyLabel: 'API Key',
+    apiKeyPlaceholder: 'Paste your API key',
+    requiredHint: 'Required. You can change it later in Settings → Models.',
+    saveButton: 'Verify and continue',
+    verifying: 'Verifying...',
+    saving: 'Saving...',
+    saved: 'Saved',
+    saveFailed: 'Save failed. Please retry.',
+    verifyFailedFallback:
+      'Verification failed. Please check the API Key, model name, and base URL.'
+  },
   templateDialog: {
     createTitle: 'Save as Template',
     editTitle: 'Edit Template',
@@ -454,9 +471,7 @@ Business presentations, product introductions, project summaries — formal but 
     pagesEmpty: 'No pages yet',
     backToSessions: 'Back to sessions',
     exportPptx: 'Export PPTX',
-    exportImagePdf: 'Export Image/PDF',
     exportPng: 'Export PNG',
-    exportPdf: 'Export PDF',
     speechScript: 'Speaker Notes',
     speechScriptTooltip: 'Generate speaker notes from slide content',
     speechScriptTabConfig: 'Settings',
@@ -597,9 +612,6 @@ Business presentations, product introductions, project summaries — formal but 
     selectorLocated: '(selected element located)',
     exportFailed: 'Export failed',
     exportCancelled: 'Export cancelled',
-    exportPdfStart: 'Exporting PDF',
-    exportPdfDescription:
-      'Large decks or complex charts may take a while. Keep the window open and the result will appear automatically.',
     exportDonePages: 'Export completed ({count} pages)',
     exportSuccessPages: 'Export succeeded ({count} pages)',
     exportPngStart: 'Exporting PNG images',
@@ -635,6 +647,8 @@ Business presentations, product introductions, project summaries — formal but 
       'The ZIP contains the current session directory for backup, migration, or troubleshooting.',
     history: 'Version History',
     historyTooltip: 'Go back to any of the latest 10 changed versions.',
+    saveTemplate: 'Save template',
+    saveTemplateTooltip: 'Save current deck as a reusable template',
     historyTitle: 'History versions',
     historyRecent: 'Latest 10',
     historyLoading: 'Loading history...',

@@ -87,14 +87,14 @@ export function PreviewToolbar({
       )}
     >
       {/* Left: Mode switcher pill */}
-      <div className="flex shrink-0 items-center gap-0.5 rounded-[9px] border border-[var(--color-border-default)]/72 bg-[#ffffff]/90 p-0.5 shadow-[0_8px_20px_rgba(74,59,42,0.10)] backdrop-blur-xl">
+      <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-[var(--color-border-default)] bg-white p-0.5 shadow-[var(--elevation-md)]">
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded-[7px] px-2 text-[10px] font-semibold leading-none transition-colors',
+            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded px-2 text-[10px] font-semibold leading-none transition-colors',
             interactionMode === 'preview'
-              ? 'bg-[var(--color-brand)] text-white shadow-[0_7px_16px_rgba(93,107,77,0.2)]'
-              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]/72'
+              ? 'bg-[var(--color-brand)] text-white '
+              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]'
           )}
           onClick={() => {
             if (interactionMode !== 'preview') {
@@ -109,10 +109,10 @@ export function PreviewToolbar({
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded-[7px] px-2 text-[10px] font-semibold leading-none transition-colors',
+            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded px-2 text-[10px] font-semibold leading-none transition-colors',
             interactionMode === 'edit'
-              ? 'bg-[var(--color-brand)] text-white shadow-[0_7px_16px_rgba(93,107,77,0.2)]'
-              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]/72'
+              ? 'bg-[var(--color-brand)] text-white '
+              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]'
           )}
           onClick={() => {
             if (interactionMode !== 'edit') {
@@ -128,10 +128,10 @@ export function PreviewToolbar({
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded-[7px] px-2 text-[10px] font-semibold leading-none transition-colors',
+            'inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded px-2 text-[10px] font-semibold leading-none transition-colors',
             interactionMode === 'ai-inspect'
-              ? 'bg-[var(--color-brand)] text-white shadow-[0_7px_16px_rgba(93,107,77,0.2)]'
-              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]/72'
+              ? 'bg-[var(--color-brand)] text-white '
+              : 'text-[var(--color-brand)] hover:bg-[var(--color-brand-subtle)]'
           )}
           onClick={() => {
             if (interactionMode !== 'ai-inspect') {
@@ -155,7 +155,7 @@ export function PreviewToolbar({
               type="button"
               variant="outline"
               size="sm"
-              className="h-7 shrink-0 rounded-[7px] border border-[var(--color-border-default)]/62 bg-[#ffffff]/90 px-2 text-[10px] leading-none text-[var(--color-brand)] shadow-[0_4px_12px_rgba(74,59,42,0.06)] hover:bg-[var(--color-brand-subtle)]/72 disabled:opacity-40"
+              className="h-7 shrink-0 rounded border border-[var(--color-border-default)] bg-white px-2 text-[10px] leading-none text-[var(--color-brand)] shadow-[var(--elevation-sm)] hover:bg-[var(--color-brand-subtle)] disabled:opacity-40"
               onClick={onUndo}
               disabled={toolbarDisabled || !canUndo}
             >
@@ -166,7 +166,7 @@ export function PreviewToolbar({
               type="button"
               variant="outline"
               size="sm"
-              className="h-7 shrink-0 rounded-[7px] border border-[var(--color-border-default)]/62 bg-[#ffffff]/90 px-2 text-[10px] leading-none text-[var(--color-brand)] shadow-[0_4px_12px_rgba(74,59,42,0.06)] hover:bg-[var(--color-brand-subtle)]/72 disabled:opacity-40"
+              className="h-7 shrink-0 rounded border border-[var(--color-border-default)] bg-white px-2 text-[10px] leading-none text-[var(--color-brand)] shadow-[var(--elevation-sm)] hover:bg-[var(--color-brand-subtle)] disabled:opacity-40"
               onClick={onRedo}
               disabled={toolbarDisabled || !canRedo}
             >
@@ -177,7 +177,7 @@ export function PreviewToolbar({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-[7px] border border-[var(--color-border-default)]/62 bg-[#ffffff]/90 px-2 text-[10px] font-semibold leading-none text-[var(--color-brand)] shadow-[0_4px_12px_rgba(74,59,42,0.06)] hover:bg-[var(--color-brand-subtle)]/72"
+                  className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded border border-[var(--color-border-default)] bg-white px-2 text-[10px] font-semibold leading-none text-[var(--color-brand)] shadow-[var(--elevation-sm)] hover:bg-[var(--color-brand-subtle)]"
                 >
                   <ImagePlus className="mr-0.5 h-2.5 w-2.5" />
                   {t('editMode.addImage')}
@@ -197,7 +197,7 @@ export function PreviewToolbar({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-[7px] border border-[var(--color-border-default)]/62 bg-[#ffffff]/90 px-2 text-[10px] font-semibold leading-none text-[var(--color-brand)] shadow-[0_4px_12px_rgba(74,59,42,0.06)] hover:bg-[var(--color-brand-subtle)]/72"
+                  className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded border border-[var(--color-border-default)] bg-white px-2 text-[10px] font-semibold leading-none text-[var(--color-brand)] shadow-[var(--elevation-sm)] hover:bg-[var(--color-brand-subtle)]"
                 >
                   <Video className="mr-0.5 h-2.5 w-2.5" />
                   {t('editMode.addVideo')}
@@ -220,7 +220,7 @@ export function PreviewToolbar({
             type="button"
             variant="default"
             size="sm"
-            className="h-7 shrink-0 rounded-[7px] bg-[var(--color-brand)] px-2 text-[10px] leading-none text-white shadow-[0_6px_14px_rgba(93,107,77,0.16)]"
+            className="h-7 shrink-0 rounded bg-[var(--color-brand)] px-2 text-[10px] leading-none text-white "
             onClick={onSaveAllEdits}
             disabled={toolbarDisabled}
           >
@@ -237,7 +237,7 @@ export function PreviewToolbar({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 shrink-0 rounded-[7px] border border-transparent bg-[var(--color-brand-subtle)]/82 px-2 text-[10px] leading-none text-[var(--color-fg-default)] shadow-[0_4px_12px_rgba(93,107,77,0.10)] hover:bg-[#c8ddb2]"
+            className="h-7 shrink-0 rounded border border-transparent bg-[var(--color-brand-subtle)] px-2 text-[10px] leading-none text-[var(--color-fg-default)]  hover:bg-[#c8ddb2]"
             onClick={onDiscardAllEdits}
             disabled={toolbarDisabled}
           >
@@ -249,7 +249,7 @@ export function PreviewToolbar({
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 shrink-0 rounded-[7px] border border-transparent bg-[var(--color-brand-subtle)]/82 px-2 text-[10px] leading-none text-[var(--color-fg-default)] shadow-[0_4px_12px_rgba(93,107,77,0.10)] hover:bg-[#c8ddb2]"
+            className="h-7 shrink-0 rounded border border-transparent bg-[var(--color-brand-subtle)] px-2 text-[10px] leading-none text-[var(--color-fg-default)]  hover:bg-[#c8ddb2]"
             onClick={() => {
               clearSelectedElement()
               setInteractionMode('preview')

@@ -882,78 +882,8 @@ export function SessionDetailPage(): React.JSX.Element {
     return t('sessionDetail.exportCheckNotice')
   }
 
-  const openProjectPreview = async (): Promise<void> => {
-    const basePath = selectedPage?.htmlPath || normalizedOrderedPages[0]?.htmlPath
-    if (!basePath) return
-    const indexPath = basePath.replace(/[^/\\]+\.html$/i, 'index.html')
-    const pageHash = selectedPage?.id || normalizedOrderedPages[0]?.id
-    await ipc.openInBrowser(indexPath, pageHash ? `#${pageHash}` : undefined, id || undefined)
-  }
 
 
-  const handleExportPdf = async (): Promise<void> => {
-    const detailState = useSessionDetailUiStore.getState()
-    if (!id || detailState.isExportingPdf) return
-    detailState.setIsExportingPdf(true)
-    toastInfo(t('sessionDetail.exportPdfStart'), {
-      description: t('sessionDetail.exportPdfDescription'),
-      duration: 4000
-    })
-    try {
-      const result = await ipc.exportPdf(id)
-      if (result.cancelled) {
-        toastInfo(t('sessionDetail.exportCancelled'))
-        return
-      }
-      if (!result.success || !result.path) {
-        toastError(t('sessionDetail.exportFailed'))
-        return
-      }
-      if (Array.isArray(result.warnings) && result.warnings.length > 0) {
-        toastWarning(t('sessionDetail.exportDonePages', { count: result.pageCount || 0 }), {
-          description: result.warnings[0]
-        })
-        return
-      }
-      toastSuccess(t('sessionDetail.exportSuccessPages', { count: result.pageCount || 0 }))
-    } catch (error) {
-      toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
-    } finally {
-      useSessionDetailUiStore.getState().setIsExportingPdf(false)
-    }
-  }
-
-  const handleExportPng = async (): Promise<void> => {
-    const detailState = useSessionDetailUiStore.getState()
-    if (!id || detailState.isExportingPng) return
-    detailState.setIsExportingPng(true)
-    toastInfo(t('sessionDetail.exportPngStart'), {
-      description: t('sessionDetail.exportPngDescription'),
-      duration: 4000
-    })
-    try {
-      const result = await ipc.exportPng(id)
-      if (result.cancelled) {
-        toastInfo(t('sessionDetail.exportCancelled'))
-        return
-      }
-      if (!result.success || !result.path) {
-        toastError(t('sessionDetail.exportFailed'))
-        return
-      }
-      if (Array.isArray(result.warnings) && result.warnings.length > 0) {
-        toastWarning(t('sessionDetail.pngExported', { count: result.pageCount || 0 }), {
-          description: t('sessionDetail.pageLoadNotice')
-        })
-        return
-      }
-      toastSuccess(t('sessionDetail.pngExported', { count: result.pageCount || 0 }))
-    } catch (error) {
-      toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
-    } finally {
-      useSessionDetailUiStore.getState().setIsExportingPng(false)
-    }
-  }
 
   const handleExportPptx = async (
     options?: { imageOnly?: boolean; embedFonts?: boolean | 'auto' | 'always' | 'never' }
@@ -999,62 +929,6 @@ export function SessionDetailPage(): React.JSX.Element {
       toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
     } finally {
       useSessionDetailUiStore.getState().setIsExportingPptx(false)
-    }
-  }
-
-  const handleExportSlidePack = async (): Promise<void> => {
-    const detailState = useSessionDetailUiStore.getState()
-    if (!id || detailState.isExportingSlidePack) return
-    detailState.setIsExportingSlidePack(true)
-    toastInfo(t('sessionDetail.slidePackPreparing'), {
-      description: t('sessionDetail.slidePackPreparingDescription'),
-      duration: 4000
-    })
-    try {
-      const result = await ipc.exportSlidePack(id)
-      if (result.cancelled) {
-        toastInfo(t('sessionDetail.exportCancelled'))
-        return
-      }
-      if (!result.success || !result.path) {
-        toastError(t('sessionDetail.exportFailed'))
-        return
-      }
-      toastSuccess(t('sessionDetail.slidePackExported'), {
-        description: t('sessionDetail.slidePackExportedDescription')
-      })
-    } catch (error) {
-      toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
-    } finally {
-      useSessionDetailUiStore.getState().setIsExportingSlidePack(false)
-    }
-  }
-
-  const handleExportSessionZip = async (): Promise<void> => {
-    const detailState = useSessionDetailUiStore.getState()
-    if (!id || detailState.isExportingSessionZip) return
-    detailState.setIsExportingSessionZip(true)
-    toastInfo(t('sessionDetail.sessionZipPreparing'), {
-      description: t('sessionDetail.sessionZipPreparingDescription'),
-      duration: 4000
-    })
-    try {
-      const result = await ipc.exportSessionZip(id)
-      if (result.cancelled) {
-        toastInfo(t('sessionDetail.exportCancelled'))
-        return
-      }
-      if (!result.success || !result.path) {
-        toastError(t('sessionDetail.exportFailed'))
-        return
-      }
-      toastSuccess(t('sessionDetail.sessionZipExported'), {
-        description: t('sessionDetail.sessionZipExportedDescription')
-      })
-    } catch (error) {
-      toastError(error instanceof Error ? error.message : t('sessionDetail.exportFailed'))
-    } finally {
-      useSessionDetailUiStore.getState().setIsExportingSessionZip(false)
     }
   }
 
@@ -1714,7 +1588,7 @@ export function SessionDetailPage(): React.JSX.Element {
       <div
         className="flex h-full min-h-0 flex-col bg-[var(--color-bg-subtle)] text-foreground outline-none"
       >
-        <header className="app-drag-region app-titlebar relative shrink-0 bg-[var(--color-bg-subtle)]/95 shadow-[0_10px_26px_rgba(124,58,237,0.10)] backdrop-blur-xl">
+        <header className="app-drag-region app-titlebar relative shrink-0 bg-[var(--color-bg-subtle)]">
           <div className="absolute left-0 top-0 h-full w-[220px] bg-[var(--color-bg-subtle)]" />
           <div
             className={`relative flex h-full items-center justify-end pl-[244px] ${
@@ -1725,28 +1599,9 @@ export function SessionDetailPage(): React.JSX.Element {
               <SessionToolbar
                 hasPages={normalizedOrderedPages.length > 0}
                 historyDisabled={historyDisabled}
-                canPreview={Boolean(selectedPage?.htmlPath || normalizedOrderedPages[0]?.htmlPath)}
-                canRevealFile={Boolean(selectedPage?.htmlPath)}
-                onExportPdf={() => void handleExportPdf()}
-                onExportPng={() => void handleExportPng()}
                 onExportPptx={(options) => void handleExportPptx(options)}
-                onExportSessionZip={() => void handleExportSessionZip()}
-                onExportSlidePack={() => void handleExportSlidePack()}
                 onOpenHistory={() => void handleOpenHistory()}
-                onOpenPreview={() => void openProjectPreview()}
-                onRevealFile={() => {
-                  if (selectedPage?.htmlPath) {
-                    void ipc.revealFile(selectedPage.htmlPath, id || undefined)
-                  }
-                }}
                 onSaveTemplate={() => setSaveTemplateOpen(true)}
-                onPresent={() => {
-                  const idx = normalizedOrderedPages.findIndex((p) => p.id === selectedPageId)
-                  void ipc.openPresentation({
-                    sessionId: id || '',
-                    startIndex: idx >= 0 ? idx : 0
-                  })
-                }}
               />
             </div>
           </div>

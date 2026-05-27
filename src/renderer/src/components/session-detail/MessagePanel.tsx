@@ -104,18 +104,19 @@ export function MessagePanel({
     : undefined
 
   return (
-    <aside className="mr-3 mb-3 mt-1 flex min-h-0 w-[300px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-[var(--color-border-default)]/60 bg-[var(--color-bg-subtle)]/76 shadow-[0_14px_32px_rgba(16,24,40,0.06)] backdrop-blur-xl">
-      <div className="relative mx-2.5 mt-2.5 overflow-hidden rounded-[1.35rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/78 px-3 pb-2.5 pt-3 shadow-[0_4px_12px_rgba(77,61,43,0.06)]">
-        <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[var(--color-brand-subtle)]/12" />
-        <div className="relative flex flex-col gap-2">
-          <h3 className="text-sm font-semibold tracking-[0.04em] text-[var(--color-fg-default)]">{t('sessionDetail.messageTitle')}</h3>
-          <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-fg-tertiary)]">
+    <aside className="mt-1 mb-3 mr-3 flex min-h-0 w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-white shadow-[var(--elevation-sm)]">
+      <div className="border-b border-[var(--color-border-default)] px-4 py-3">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold text-[var(--color-fg-default)]">
+            {t('sessionDetail.messageTitle')}
+          </h3>
+          <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-fg-secondary)]">
             <span>{t('sessionDetail.context')}</span>
             <Select
               value={chatType}
               onValueChange={(value) => setChatType(value === 'page' ? 'page' : 'main')}
             >
-              <SelectTrigger className="h-8 w-[132px] rounded-full border-[var(--color-border-default)]/70 bg-[#ffffff]/82 px-3 py-1 text-xs text-[var(--color-fg-default)] shadow-none">
+              <SelectTrigger className="h-7 w-[140px] text-xs">
                 <SelectValue placeholder={t('sessionDetail.contextPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -132,10 +133,10 @@ export function MessagePanel({
       <ScrollArea
         data-messages-container
         className="min-h-0 flex-1"
-        viewportClassName="px-2.5 py-2"
+        viewportClassName="px-3 py-3"
       >
         {messages.length === 0 && !isGenerating ? (
-          <div className="mt-24 flex min-h-full items-center justify-center text-sm text-[#7a6b56]">
+          <div className="mt-24 flex min-h-full items-center justify-center text-sm text-[var(--color-fg-tertiary)]">
             {t('sessionDetail.emptyMessages')}
           </div>
         ) : (
@@ -145,14 +146,16 @@ export function MessagePanel({
             ))}
 
             {isGenerating && progress && (
-              <div className="rounded-[1.15rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/82 px-3 py-2 shadow-[0_6px_14px_rgba(16,24,40,0.06)]">
-                <p className="mb-2 text-sm text-[var(--color-fg-secondary)]">{progress.label || t('sessionDetail.modelProcessing')}</p>
+              <div className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 py-2.5">
+                <p className="mb-2 text-sm text-[var(--color-fg-secondary)]">
+                  {progress.label || t('sessionDetail.modelProcessing')}
+                </p>
                 <Progress value={progress.progress} />
               </div>
             )}
 
             {error && (
-              <div className="rounded-[1.15rem] bg-[rgba(217,124,139,0.12)] px-3 py-2 text-sm text-destructive">
+              <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[var(--color-danger)]">
                 {error}
               </div>
             )}
@@ -163,8 +166,8 @@ export function MessagePanel({
 
       <div
         className={cn(
-          'mx-2.5 mb-2.5 rounded-[1.4rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/84 px-2.5 pb-3 pt-2 shadow-[0_12px_24px_rgba(16,24,40,0.06)] transition-colors',
-          assetDragActive && 'border-[#afc79a]/75 bg-[var(--color-bg-subtle)]/88'
+          'border-t border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 pb-3 pt-2.5 transition-colors',
+          assetDragActive && 'bg-[var(--color-brand-subtle)]'
         )}
         onDragEnter={(event) => {
           event.preventDefault()
@@ -185,8 +188,8 @@ export function MessagePanel({
         }}
       >
         {selectedSelector && (
-          <div className="mb-2 flex items-center gap-2 rounded-[1rem] border border-[var(--color-border-default)]/65 bg-[var(--color-bg-muted)]/70 px-2 py-1.5">
-            <span className="shrink-0 rounded-full bg-[var(--color-brand-subtle)]/82 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-[var(--color-fg-secondary)]">
+          <div className="mb-2 flex items-center gap-2 rounded-md border border-[var(--color-border-default)] bg-white px-2 py-1.5">
+            <span className="shrink-0 rounded bg-[var(--color-brand-subtle)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-brand)]">
               {t('sessionDetail.selectorBadge')}
             </span>
             <Tooltip>
@@ -202,7 +205,7 @@ export function MessagePanel({
             <button
               type="button"
               onClick={clearSelectedElement}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#64735a] transition-colors hover:bg-[var(--color-brand-subtle)]/78 hover:text-[var(--color-fg-default)]"
+              className="inline-flex h-5 w-5 items-center justify-center rounded text-[var(--color-fg-tertiary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)]"
               aria-label={t('sessionDetail.clearSelector')}
               title={t('sessionDetail.clearSelector')}
             >
@@ -211,7 +214,7 @@ export function MessagePanel({
           </div>
         )}
         {chatType === 'main' && (
-          <div className="mb-2 rounded-[1rem] border border-[var(--color-border-default)]/65 bg-[var(--color-bg-muted)]/70 px-2.5 py-2 text-xs text-[#6a5c48]">
+          <div className="mb-2 rounded-md border border-[var(--color-border-default)] bg-white px-2.5 py-2 text-xs text-[var(--color-fg-secondary)]">
             {t('sessionDetail.mainDeckHint')}
           </div>
         )}
@@ -220,13 +223,13 @@ export function MessagePanel({
             {pendingAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="flex max-w-full items-center gap-1.5 rounded-full border border-[var(--color-brand-subtle)]/66 bg-[var(--color-brand-subtle)]/76 px-2 py-1 text-[11px] text-[var(--color-fg-secondary)] shadow-[0_3px_8px_rgba(124,58,237,0.10)]"
+                className="flex max-w-full items-center gap-1.5 rounded border border-[var(--color-border-default)] bg-white px-2 py-1 text-[11px] text-[var(--color-fg-default)]"
                 title={`${asset.originalName}\n${asset.relativePath}`}
               >
                 {asset.mimeType.startsWith('video/') ? (
-                  <Video className="h-3.5 w-3.5 shrink-0" />
+                  <Video className="h-3.5 w-3.5 shrink-0 text-[var(--color-fg-tertiary)]" />
                 ) : (
-                  <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+                  <ImageIcon className="h-3.5 w-3.5 shrink-0 text-[var(--color-fg-tertiary)]" />
                 )}
                 <span className="min-w-0 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap">
                   {asset.originalName || asset.fileName}
@@ -234,7 +237,7 @@ export function MessagePanel({
                 <button
                   type="button"
                   onClick={() => removePendingAsset(asset.id)}
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[#657552] hover:bg-[var(--color-brand-subtle-hover)]"
+                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[var(--color-fg-tertiary)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)]"
                   aria-label={t('sessionDetail.removeAsset')}
                 >
                   <X className="h-3 w-3" />
@@ -262,7 +265,7 @@ export function MessagePanel({
           }}
           disabled={isGenerating}
           rows={4}
-          className="min-h-[96px] resize-none rounded-[1.15rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-3 py-2 text-[13px] leading-5 text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(16,24,40,0.06)] focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[96px] resize-none text-[13px]"
         />
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="flex min-w-0 items-center gap-2">
@@ -271,7 +274,7 @@ export function MessagePanel({
                 <button
                   type="button"
                   disabled={isGenerating || isUploadingAssets}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[38%_62%_44%_56%/55%_45%_55%_45%] border border-[var(--color-brand-subtle)]/66 bg-[var(--color-brand-subtle)]/80 text-[#526942] shadow-[0_4px_10px_rgba(124,58,237,0.10)] transition-colors hover:bg-[var(--color-brand-subtle-hover)] disabled:pointer-events-none disabled:opacity-45"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--color-border-default)] bg-white text-[var(--color-fg-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)] disabled:pointer-events-none disabled:opacity-45"
                   aria-label={t('sessionDetail.addAsset')}
                   title={t('sessionDetail.addAsset')}
                 >
@@ -307,9 +310,9 @@ export function MessagePanel({
               variant="destructive"
               onClick={onCancel}
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full px-3 text-xs shadow-[0_8px_18px_rgba(177,90,88,0.22)]"
+              className="shrink-0 whitespace-nowrap"
             >
-              <StopCircle className="mr-1 h-4 w-4" />
+              <StopCircle className="h-3.5 w-3.5" />
               {t('sessionDetail.stop')}
             </Button>
           ) : (
@@ -320,9 +323,9 @@ export function MessagePanel({
                 ((selectedSelector ? 'page' : chatType) === 'page' && !selectedPageExists)
               }
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full bg-[var(--color-brand)] px-3 text-xs text-white shadow-[0_8px_18px_rgba(124,58,237,0.10)] hover:bg-[var(--color-fg-default)]"
+              className="shrink-0 whitespace-nowrap"
             >
-              <Send className="mr-1 h-4 w-4" />
+              <Send className="h-3.5 w-3.5" />
               {t('sessionDetail.send')}
             </Button>
           )}

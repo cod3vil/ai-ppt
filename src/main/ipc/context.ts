@@ -1160,7 +1160,7 @@ export function createIpcContext(
       await win.webContents.executeJavaScript(FREEZE_PAGE_FOR_EXPORT_SCRIPT, true)
       const readyResult = await readyWaitPromise
       if (readyResult.timedOut) {
-        log.warn('[export:pdf] print ready timeout', {
+        log.warn('[export:render] print ready timeout', {
           pageId: page.pageId,
           htmlPath: page.htmlPath,
           timeoutMs

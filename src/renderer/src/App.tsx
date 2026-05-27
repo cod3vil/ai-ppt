@@ -13,6 +13,7 @@ import { FontsPage } from './pages/fonts'
 import { StyleEditorPage } from './pages/style-editor'
 import { TemplatesPage } from './pages/templates'
 import { AppToaster } from './components/AppToaster'
+import { SetupGate } from './components/setup/SetupGate'
 import { ScrollArea } from './components/ui/ScrollArea'
 import { useT } from './i18n'
 import { ipc } from './lib/ipc'
@@ -44,7 +45,7 @@ function App(): React.JSX.Element {
 
   if (isSessionDetailRoute) {
     return (
-      <>
+      <SetupGate>
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
           <Routes>
             <Route path="/sessions/:id/generating" element={<SessionGeneratingPage />} />
@@ -57,12 +58,12 @@ function App(): React.JSX.Element {
           </Routes>
         </div>
         <AppToaster />
-      </>
+      </SetupGate>
     )
   }
 
   return (
-    <>
+    <SetupGate>
       <div className="h-full min-h-0 overflow-hidden bg-background text-foreground">
         <div className="flex h-full min-h-0 flex-col">
           <div className="app-drag-region app-titlebar bg-background/85 backdrop-blur-xl" />
@@ -89,7 +90,7 @@ function App(): React.JSX.Element {
         </div>
       </div>
       <AppToaster />
-    </>
+    </SetupGate>
   )
 }
 

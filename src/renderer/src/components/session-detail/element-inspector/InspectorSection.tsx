@@ -10,7 +10,7 @@ export function InspectorSection({
   children: ReactNode
 }): React.JSX.Element {
   return (
-    <section className="rounded-[1.15rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/82 px-3 py-2.5 shadow-[0_6px_14px_rgba(74,59,42,0.08)]">
+    <section className="rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] px-3 py-2.5">
       <div className="flex items-center gap-1.5">
         {icon}
         <span className="text-[11px] font-medium text-[var(--color-fg-tertiary)]">{title}</span>

@@ -34,36 +34,33 @@ export function ElementInspectorPanel({
   const snapshot = selection?.snapshot
 
   return (
-    <div className="mr-3 mb-3 mt-1 flex min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-[var(--color-border-default)]/60 bg-[var(--color-bg-subtle)]/76 shadow-[0_14px_32px_rgba(16,24,40,0.06)] backdrop-blur-xl">
-      <div className="relative mx-2.5 mt-2.5 overflow-hidden rounded-[1.35rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/78 px-3 pb-2.5 pt-3 shadow-[0_4px_12px_rgba(77,61,43,0.06)]">
-        <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[var(--color-brand-subtle)]/12" />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-fg-tertiary)]">
-              {t('sessionDetail.elementInspector')}
-            </div>
-            {selection && (
-              <div className="mt-1 text-[11px] text-[#a0977e]">
-                {getElementKindLabel(selection)}
-              </div>
-            )}
+    <div className="mt-1 mb-3 mr-3 flex min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-white shadow-[var(--elevation-sm)]">
+      <div className="flex items-center justify-between border-b border-[var(--color-border-default)] px-3 py-2.5">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-tertiary)]">
+            {t('sessionDetail.elementInspector')}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#667257] transition-colors hover:bg-[var(--color-brand-subtle)]/78 hover:text-[var(--color-fg-default)]"
-            aria-label={t('sessionDetail.closeInspector')}
-            title={t('sessionDetail.closeInspector')}
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {selection && (
+            <div className="mt-0.5 text-[11px] text-[var(--color-fg-tertiary)]">
+              {getElementKindLabel(selection)}
+            </div>
+          )}
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-[var(--color-fg-tertiary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)]"
+          aria-label={t('sessionDetail.closeInspector')}
+          title={t('sessionDetail.closeInspector')}
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="flex-1 space-y-2.5 overflow-y-auto px-2.5 py-2.5">
+      <div className="flex-1 space-y-2.5 overflow-y-auto p-2.5">
         {!selection || !snapshot ? (
-          <div className="rounded-[1.15rem] border border-[#e8c8c6]/72 bg-[#fef2f2]/82 px-3 py-4 text-center shadow-[0_6px_14px_rgba(16,24,40,0.06)]">
-            <p className="whitespace-pre-line text-[12px] leading-5 text-[var(--color-danger)]">
+          <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-3 text-center">
+            <p className="whitespace-pre-line text-xs leading-5 text-[var(--color-danger)]">
               {t('sessionDetail.inspectorUnavailable')}
             </p>
           </div>

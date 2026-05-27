@@ -158,7 +158,7 @@ export const PageSidebar = memo(function PageSidebar({
 
   return (
     <aside
-      className={`relative flex min-h-0 shrink-0 flex-col overflow-hidden bg-[var(--color-bg-subtle)] pb-3 pt-3 shadow-[inset_-16px_0_30px_rgba(124,58,237,0.10)] transition-[width] duration-300 ${collapsed ? 'w-[48px]' : 'w-[192px]'}`}
+      className={`relative flex min-h-0 shrink-0 flex-col overflow-hidden bg-[var(--color-bg-subtle)] mt-1.5 pb-3 pt-2 transition-[width] duration-300 ${collapsed ? 'w-[48px]' : 'w-[192px]'}`}
     >
       <div className={`flex min-h-0 flex-1 flex-col ${collapsed ? 'px-1' : 'px-2.5'}`}>
       {collapsed ? (
@@ -171,7 +171,7 @@ export const PageSidebar = memo(function PageSidebar({
                 <button
                   type="button"
                   onClick={handleBackToSessions}
-                  className="flex h-8 w-full items-center justify-center rounded-xl bg-[var(--color-border-default)]/72 text-[var(--color-brand)] shadow-[0_4px_10px_rgba(124,58,237,0.10)] transition-colors hover:bg-[var(--color-brand-subtle)]/78 hover:text-[var(--color-fg-default)] cursor-pointer"
+                  className="flex h-8 w-full items-center justify-center rounded-md bg-transparent text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-fg-default)] cursor-pointer"
                   aria-label={t('sessionDetail.backToSessions')}
                 >
                   <Home className="h-4 w-4" />
@@ -193,7 +193,7 @@ export const PageSidebar = memo(function PageSidebar({
                   type="button"
                   data-page-id={page.id}
                   onClick={() => !disabled && setSelectedPageId(page.id)}
-                  className={`flex h-8 w-full items-center justify-center rounded-xl text-xs font-semibold transition-all ${selectedPageId === page.id ? 'bg-[var(--color-brand-subtle)]/86 text-[var(--color-fg-default)] shadow-[0_4px_12px_rgba(124,58,237,0.10)]' : 'text-[var(--color-fg-secondary)] hover:bg-[var(--color-border-default)]/50'}`}
+                  className={`flex h-8 w-full items-center justify-center rounded-md text-xs font-semibold transition-all ${selectedPageId === page.id ? 'bg-[var(--color-brand-subtle)] text-[var(--color-fg-default)]' : 'text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-muted)]'}`}
                 >
                   P{page.pageNumber}
                 </button>
@@ -211,7 +211,7 @@ export const PageSidebar = memo(function PageSidebar({
                     disabled={disabled}
                     title={t('sessionDetail.addPage')}
                     aria-label={t('sessionDetail.addPage')}
-                    className="flex h-8 w-full items-center justify-center rounded-xl bg-[var(--color-brand-subtle)]/30 text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-subtle)]/50 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                    className="flex h-8 w-full items-center justify-center rounded-xl bg-[var(--color-brand-subtle)] text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-subtle)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -238,7 +238,7 @@ export const PageSidebar = memo(function PageSidebar({
                   <button
                     type="button"
                     onClick={onToggleCollapsed}
-                    className="flex h-8 w-full items-center justify-center rounded-xl text-[var(--color-fg-tertiary)] transition-colors hover:bg-[var(--color-border-default)]/50 hover:text-[var(--color-fg-default)] cursor-pointer"
+                    className="flex h-8 w-full items-center justify-center rounded-xl text-[var(--color-fg-tertiary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)] cursor-pointer"
                     aria-label={t('sessionDetail.expandSidebar')}
                   >
                     <PanelRight className="h-4 w-4" />
@@ -253,14 +253,13 @@ export const PageSidebar = memo(function PageSidebar({
         // Expanded: full sidebar
         <>
           {/* Top: back + page count */}
-          <div className="relative mb-3 flex items-center justify-between overflow-hidden rounded-[1.35rem] bg-[var(--color-border-default)]/72 px-2 py-1.5 shadow-[0_10px_24px_rgba(124,58,237,0.10)]">
-            <div className="pointer-events-none absolute -right-6 -top-7 h-20 w-20 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[var(--color-brand-subtle)]/62" />
+          <div className="mb-3 flex items-center justify-between gap-2 px-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={handleBackToSessions}
-                  className="relative inline-flex h-8 w-8 items-center justify-center rounded-[38%_62%_44%_56%/55%_45%_55%_45%] bg-[var(--color-bg-subtle)]/72 text-[var(--color-brand)] shadow-[0_4px_10px_rgba(124,58,237,0.10)] transition-colors hover:bg-[var(--color-brand-subtle)]/78 hover:text-[var(--color-fg-default)] cursor-pointer"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-fg-secondary)] transition-colors hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg-default)] cursor-pointer"
                   aria-label={t('sessionDetail.backToSessions')}
                 >
                   <Home className="h-4 w-4" />
@@ -268,7 +267,7 @@ export const PageSidebar = memo(function PageSidebar({
               </TooltipTrigger>
               <TooltipContent side="right">{t('sessionDetail.backToSessions')}</TooltipContent>
             </Tooltip>
-            <div className="relative rounded-full bg-[var(--color-brand-subtle)]/74 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-fg-default)] shadow-[0_3px_8px_rgba(124,58,237,0.10)]">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-fg-tertiary)]">
               {t('sessionDetail.pagesCount', { count: pages.length })}
             </div>
           </div>
@@ -276,7 +275,7 @@ export const PageSidebar = memo(function PageSidebar({
           {/* Middle: page list */}
           <ScrollArea className="min-h-0 flex-1" viewportClassName="px-0.5 pb-2" viewportRef={viewportRef}>
             {pages.length === 0 ? (
-              <div className="flex min-h-[96px] items-center justify-center rounded-[1.25rem] bg-[var(--color-border-default)]/54 text-xs text-[var(--color-fg-tertiary)]">
+              <div className="flex min-h-[96px] items-center justify-center rounded-md border border-dashed border-[var(--color-border-default)] text-xs text-[var(--color-fg-tertiary)]">
                 {t('sessionDetail.pagesEmpty')}
               </div>
             ) : (
@@ -354,15 +353,13 @@ export const PageSidebar = memo(function PageSidebar({
                               setSelectedPageId(page.id)
                               onRetryFailedPage(page)
                             }}
-                            className="group mt-1 block w-full rounded-[1.1rem] bg-[#fef2f2]/85 p-1.5 text-left shadow-[0_8px_18px_rgba(142,90,83,0.08)] transition-all duration-200 hover:bg-[#f1ddd7] hover:shadow-[0_10px_22px_rgba(142,90,83,0.12)] disabled:cursor-not-allowed disabled:opacity-45"
+                            className="mt-1 block w-full rounded-md border border-[#fecaca] bg-[#fef2f2] px-2 py-1.5 text-left transition-colors hover:bg-[#fee2e2] disabled:cursor-not-allowed disabled:opacity-45"
                           >
-                            <div className="rounded-[0.9rem] border border-[#fecaca]/70 bg-[#fef2f2] px-2.5 py-2">
-                              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-danger)]">
-                                P{page.pageNumber}
-                              </div>
-                              <div className="mt-1 text-[11px] font-medium leading-4 text-[var(--color-danger)]">
-                                {t('sessionDetail.retryFailedPage')}
-                              </div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-danger)]">
+                              P{page.pageNumber}
+                            </div>
+                            <div className="mt-0.5 text-[11px] font-medium leading-4 text-[var(--color-danger)]">
+                              {t('sessionDetail.retryFailedPage')}
                             </div>
                           </button>
                         )}
@@ -382,7 +379,7 @@ export const PageSidebar = memo(function PageSidebar({
                   <button
                     type="button"
                     disabled={disabled}
-                    className="flex flex-1 items-center justify-center gap-1 rounded-[1rem] border border-dashed border-[var(--color-border-strong)]/60 bg-[var(--color-brand-subtle)]/30 px-2 py-1.5 text-[11px] font-medium text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-subtle)]/50 hover:text-[var(--color-fg-default)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed border-[var(--color-border-strong)] bg-[var(--color-brand-subtle)] px-2 py-1.5 text-[11px] font-medium text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-fg-default)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                   >
                     <Plus className="h-3 w-3" />
                     {t('sessionDetail.addPage')}

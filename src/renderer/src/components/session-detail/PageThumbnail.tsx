@@ -29,28 +29,15 @@ export const PageThumbnail = memo(function PageThumbnail({
           onClick={onSelect ? () => onSelect(page.id) : undefined}
           aria-disabled={!onSelect}
           className={cn(
-            'group relative block w-full min-w-0 overflow-hidden rounded-[1.25rem] p-1.5 text-left transition-all duration-200',
+            'group relative block w-full min-w-0 overflow-hidden rounded-md p-1.5 text-left transition-colors',
             onSelect ? 'cursor-pointer' : 'cursor-default opacity-60',
             isSelected
-              ? 'bg-[var(--color-brand-subtle)]/86 shadow-[0_14px_26px_rgba(124,58,237,0.10)]'
-              : 'bg-[var(--color-border-default)]/34 hover:bg-[var(--color-border-default)]/68 hover:shadow-[0_8px_18px_rgba(124,58,237,0.10)]'
+              ? 'bg-[var(--color-brand-subtle)] ring-1 ring-[var(--color-brand)]'
+              : 'hover:bg-[var(--color-bg-muted)]'
           )}
         >
           <div
-            className={cn(
-              'pointer-events-none absolute -right-7 -top-8 h-20 w-20 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] transition-opacity',
-              isSelected
-                ? 'bg-[var(--color-brand-hover)]/24 opacity-100'
-                : 'bg-[var(--color-brand-subtle)]/28 opacity-0 group-hover:opacity-100'
-            )}
-          />
-          <div
-            className={cn(
-              'relative h-[106px] w-full overflow-hidden rounded-[1rem] bg-[var(--color-bg-subtle)]/88 shadow-[0_5px_14px_rgba(124,58,237,0.10)]',
-              isSelected
-                ? 'shadow-[0_6px_16px_rgba(124,58,237,0.10)]'
-                : 'group-hover:shadow-[0_6px_15px_rgba(124,58,237,0.10)]'
-            )}
+            className="relative h-[106px] w-full overflow-hidden rounded border border-[var(--color-border-default)] bg-white"
             style={{ contain: 'paint' }}
           >
             <PreviewIframe
@@ -63,18 +50,23 @@ export const PageThumbnail = memo(function PageThumbnail({
               thumbnail
             />
           </div>
-          <div className="relative mt-1.5 flex items-center justify-between gap-1 px-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-fg-secondary)]">
+          <div className="mt-1.5 flex items-center justify-between gap-1 px-0.5">
+            <span
+              className={cn(
+                'text-[10px] font-semibold uppercase tracking-wider',
+                isSelected ? 'text-[var(--color-brand)]' : 'text-[var(--color-fg-tertiary)]'
+              )}
+            >
               P{page.pageNumber}
             </span>
             {isSelected ? (
-              <span className="rounded-full bg-[var(--color-brand)] px-1.5 py-0.5 text-[9px] font-semibold text-white shadow-[0_3px_8px_rgba(62,74,50,0.18)]">
+              <span className="rounded-full bg-[var(--color-brand)] px-1.5 py-0.5 text-[9px] font-semibold text-white">
                 {t('sessionDetail.current')}
               </span>
             ) : null}
           </div>
           <div
-            className="relative mt-0.5 block w-full min-w-0 max-w-full overflow-hidden whitespace-normal break-words px-0.5 text-[11px] font-medium leading-4 text-[var(--color-fg-secondary)]"
+            className="mt-0.5 block w-full min-w-0 max-w-full overflow-hidden whitespace-normal break-words px-0.5 text-[11px] font-medium leading-4 text-[var(--color-fg-secondary)]"
             style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -88,10 +80,10 @@ export const PageThumbnail = memo(function PageThumbnail({
       </TooltipTrigger>
       <TooltipContent side="right" align="start">
         <div className="max-w-[240px]">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-fg-tertiary)]">
+          <div className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
             {t('sessionDetail.pageNumber', { pageNumber: page.pageNumber })}
           </div>
-          <div className="mt-0.5 text-sm font-medium text-[var(--color-fg-default)]">{page.title}</div>
+          <div className="mt-0.5 text-sm font-medium">{page.title}</div>
         </div>
       </TooltipContent>
     </Tooltip>

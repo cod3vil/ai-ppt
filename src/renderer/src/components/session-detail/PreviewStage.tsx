@@ -66,14 +66,12 @@ export const PreviewStage = forwardRef<
 
   return (
     <main className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-1">
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[2rem] bg-[var(--color-border-default)]/54 p-3 shadow-[0_18px_38px_rgba(124,58,237,0.10)]">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-[30%_70%_70%_30%/30%_30%_70%_70%] bg-[var(--color-brand-subtle)]/42" />
-        <div className="pointer-events-none absolute -bottom-24 left-8 h-48 w-64 rounded-[5%_95%_10%_90%/85%_15%_85%_15%] bg-[var(--color-border-default)]/20" />
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-subtle)] p-3 shadow-[var(--elevation-sm)]">
         {selectedPage ? (
-          <div className="relative h-full overflow-hidden rounded-[1.55rem] bg-[var(--color-bg-subtle)] p-2 shadow-[0_10px_24px_rgba(124,58,237,0.10)]">
+          <div className="relative h-full overflow-hidden rounded-md border border-[var(--color-border-default)] bg-white">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] truncate border-l-2 border-[#7f9468] bg-[#ffffff]/68 px-3 py-1.5 text-sm font-medium leading-5 text-[var(--color-fg-default)] shadow-[0_6px_16px_rgba(16,24,40,0.06)] backdrop-blur-md sm:max-w-[460px]">
+                <div className="absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] truncate rounded border-l-2 border-[var(--color-brand)] bg-white/95 px-2.5 py-1 text-xs font-medium leading-5 text-[var(--color-fg-default)] shadow-[var(--elevation-sm)] sm:max-w-[460px]">
                   {displayTitle}
                 </div>
               </TooltipTrigger>
@@ -103,31 +101,33 @@ export const PreviewStage = forwardRef<
               onDeleteRequest={onDeleteRequest}
             />
             {selectedPage.status === 'failed' && (
-              <div className="absolute bottom-5 left-5 z-20 max-w-[520px] rounded-[1rem] bg-[#fef2f2]/92 px-3 py-2 text-xs text-[var(--color-danger)] shadow-[0_10px_24px_rgba(142,90,83,0.12)] backdrop-blur-sm">
+              <div className="absolute bottom-4 left-4 z-20 max-w-[520px] rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[var(--color-danger)] shadow-[var(--elevation-sm)]">
                 {t('sessionDetail.failedPageHint')}
               </div>
             )}
             {isGenerating && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-[1.55rem] bg-[var(--color-bg-subtle)]/68 backdrop-blur-sm transition-opacity">
-                <div className="flex flex-col items-center gap-3 rounded-[1.5rem] bg-[var(--color-border-default)]/88 px-8 py-5 shadow-[0_14px_30px_rgba(16,24,40,0.06)]">
-                  <Loader2 className="h-6 w-6 animate-spin text-[var(--color-brand)]" />
-                  {progressLabel ? <p className="text-sm text-[#5a674b]">{progressLabel}</p> : null}
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-2.5 rounded-md border border-[var(--color-border-default)] bg-white px-6 py-4 shadow-[var(--elevation-lg)]">
+                  <Loader2 className="h-5 w-5 animate-spin text-[var(--color-brand)]" />
+                  {progressLabel ? (
+                    <p className="text-sm text-[var(--color-fg-secondary)]">{progressLabel}</p>
+                  ) : null}
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="relative flex h-full min-h-[420px] flex-col items-center justify-center gap-4 rounded-[1.55rem] bg-[var(--color-bg-subtle)]/84 text-center text-[var(--color-brand)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.32)]">
+          <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-3 rounded-md border border-dashed border-[var(--color-border-default)] bg-white text-center text-[var(--color-fg-secondary)]">
             {isGenerating ? (
-              <Loader2 className="h-7 w-7 animate-spin text-[var(--color-brand)]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--color-brand)]" />
             ) : (
-              <Sparkles className="h-7 w-7 text-[var(--color-brand-hover)]" />
+              <Sparkles className="h-6 w-6 text-[var(--color-fg-tertiary)]" />
             )}
             <div className="space-y-1">
-              <p className="text-base font-medium text-[var(--color-fg-default)]">
+              <p className="text-sm font-medium text-[var(--color-fg-default)]">
                 {t('sessionDetail.emptyPreviewTitle')}
               </p>
-              <p className="text-sm">
+              <p className="text-xs text-[var(--color-fg-tertiary)]">
                 {isGenerating ? t('sessionDetail.preparingPreview') : t('sessionDetail.briefHint')}
               </p>
             </div>

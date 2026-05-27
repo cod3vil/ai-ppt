@@ -8,6 +8,22 @@ export const zh = {
     saving: '保存中...',
     retryLater: '请稍后重试'
   },
+  setupGate: {
+    title: '配置 API Key',
+    description:
+      '已为你预置默认模型，但还缺一把钥匙。填好 API Key 后才能开始生成演示文稿。',
+    modelLabel: '模型',
+    baseUrlLabel: '接口地址',
+    apiKeyLabel: 'API Key',
+    apiKeyPlaceholder: '粘贴你的 API Key',
+    requiredHint: '必填。填入后可立即开始使用；之后在「设置 → 模型接入」可随时修改。',
+    saveButton: '验证并进入',
+    verifying: '正在验证...',
+    saving: '保存中...',
+    saved: '已保存',
+    saveFailed: '保存失败，请重试',
+    verifyFailedFallback: '验证失败，请检查 API Key、模型名和接口地址。'
+  },
   templateDialog: {
     createTitle: '保存为模板',
     editTitle: '编辑模板信息',
@@ -440,9 +456,7 @@ export const zh = {
     pagesEmpty: '暂无页面',
     backToSessions: '返回会话页',
     exportPptx: '导出 PPTX',
-    exportImagePdf: '导出图片/PDF',
     exportPng: '导出 PNG',
-    exportPdf: '导出 PDF',
     speechScript: '演讲稿',
     speechScriptTooltip: '根据幻灯片内容生成演讲稿',
     speechScriptTabConfig: '生成设置',
@@ -580,9 +594,6 @@ export const zh = {
     selectorLocated: '（已定位选中元素）',
     exportFailed: '导出失败',
     exportCancelled: '已取消导出',
-    exportPdfStart: '正在导出 PDF，请稍等',
-    exportPdfDescription:
-      '页面较多或图表较复杂时可能会比较慢，请保持窗口打开，完成后会自动提示结果。',
     exportDonePages: '导出完成（{count} 页）',
     exportSuccessPages: '导出成功（{count} 页）',
     exportPngStart: '正在导出 PNG 图片',
@@ -614,6 +625,8 @@ export const zh = {
     sessionZipExportedDescription: 'ZIP 文件包含当前会话目录，可用于备份、迁移或排查问题。',
     history: '版本历史',
     historyTooltip: '可以回到最新10次任意改动历史版本',
+    saveTemplate: '保存模板',
+    saveTemplateTooltip: '保存当前演示为模板',
     historyTitle: '历史版本',
     historyRecent: '最近 10 条',
     historyLoading: '正在加载历史版本...',

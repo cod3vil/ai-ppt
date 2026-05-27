@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, screen, type Size } from 'electron'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import log from 'electron-log/main.js'
 import dayjs from 'dayjs'
@@ -88,6 +88,55 @@ function configureLogging(): void {
     version: app.getVersion(),
     file: log.transports.file.getFile().path,
   })
+}
+
+function isOneDriveRedirected(p: string): boolean {
+  // Match path segments named OneDrive or OneDrive - <tenant>.
+  return /[\\/]OneDrive(\s*-\s*[^\\/]+)?[\\/]/i.test(p)
+}
+
+function probeWritable(dir: string): boolean {
+  try {
+    mkdirSync(dir, { recursive: true })
+    const probe = join(dir, '.ai-ppt-write-probe')
+    writeFileSync(probe, '')
+    unlinkSync(probe)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Default storage path for a fresh install. Tries platform-conventional
+ * locations first, then falls back to ones we know are writable.
+ *
+ * Windows: skip Documents if it's been redirected into OneDrive — generated
+ * PPT files would otherwise sync to the cloud, which is slow and surprising
+ * for a local-first tool.
+ */
+function pickDefaultStoragePath(): string {
+  const home = app.getPath('home')
+  const documents = app.getPath('documents')
+  const userData = app.getPath('userData')
+
+  const candidates: string[] = []
+  if (process.platform === 'win32') {
+    if (!isOneDriveRedirected(documents)) {
+      candidates.push(join(documents, 'AI-PPT'))
+    }
+    candidates.push(join(home, 'AI-PPT'))
+  } else {
+    candidates.push(join(documents, 'AI-PPT'))
+    candidates.push(join(home, 'AI-PPT'))
+  }
+  // Always-writable last resort under app sandbox.
+  candidates.push(join(userData, 'storage'))
+
+  for (const candidate of candidates) {
+    if (probeWritable(candidate)) return candidate
+  }
+  return ''
 }
 
 function parseVersion(version: string): number[] {
@@ -281,14 +330,65 @@ if (gotSingleInstanceLock) {
     configureLogging()
     electronApp.setAppUserModelId('com.ohmyppt.app')
 
-    const dbPath = is.dev ? join(process.cwd(), 'ohmyppt.dev.db') : undefined
+    const dbPath = is.dev ? join(process.cwd(), 'local.dev.db') : undefined
     db = new PPTDatabase(dbPath)
     await db.init()
     setStyleDb(db)
     log.info('[app] database initialized', {
       env: is.dev ? 'dev' : 'prod',
-      dbPath: dbPath || 'userData/ohmyppt.db',
+      dbPath: dbPath || 'userData/local.db',
     })
+
+    // First-launch default storage path. New users shouldn't be blocked by Settings
+    // before they can create anything. pickDefaultStoragePath() encodes
+    // platform-specific preferences (e.g. skipping OneDrive-redirected Documents
+    // on Windows) and probes each candidate for write access before picking.
+    const existingStoragePath = (
+      (await db.getSetting<string>('storage_path').catch(() => '')) || ''
+    ).trim()
+    if (!existingStoragePath) {
+      const defaultStorage = pickDefaultStoragePath()
+      if (defaultStorage) {
+        try {
+          await db.setStoragePath(defaultStorage)
+          log.info('[app] initialized default storage path', {
+            platform: process.platform,
+            path: defaultStorage
+          })
+        } catch (err) {
+          log.warn('[app] failed to persist default storage path', {
+            path: defaultStorage,
+            message: err instanceof Error ? err.message : String(err)
+          })
+        }
+      } else {
+        log.warn('[app] no writable candidate for default storage path; user must pick manually')
+      }
+    }
+
+    // First-launch default model. Seed an OpenAI-compatible config pointing at
+    // the upapi.cn gateway so users see a working entry in Settings → Models
+    // and aren't blocked by an empty list. API key is left blank — user must
+    // fill it in before actually generating.
+    const existingModels = await db.listModelConfigs().catch(() => [])
+    if (existingModels.length === 0) {
+      try {
+        await db.upsertModelConfig({
+          name: 'deepseek-v4-flash',
+          provider: 'openai',
+          model: 'deepseek-v4-flash',
+          apiKey: '',
+          baseUrl: 'https://gw.upapi.cn/v1',
+          maxTokens: 4096,
+          active: true
+        })
+        log.info('[app] seeded default model config')
+      } catch (err) {
+        log.warn('[app] failed to seed default model config', {
+          message: err instanceof Error ? err.message : String(err)
+        })
+      }
+    }
     agentManager = new AgentManager(db)
 
     const window = createWindow()

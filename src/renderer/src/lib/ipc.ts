@@ -467,8 +467,6 @@ export const ipc = {
     getIpc().invoke('assets:list', { sessionId, assetType }) as Promise<{
       assets: Array<{ fileName: string; relativePath: string; absolutePath: string }>
     }>,
-  exportPdf: (sessionId: string) =>
-    getIpc().invoke('export:pdf', { sessionId }) as Promise<ExportDeckResult>,
   exportPng: (sessionId: string) =>
     getIpc().invoke('export:png', { sessionId }) as Promise<ExportDeckResult>,
   exportPptx: (

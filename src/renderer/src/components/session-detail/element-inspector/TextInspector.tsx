@@ -24,7 +24,7 @@ export function TextInspector({
             onDraftChange({ ...draft, text: event.target.value }, { commit: true, fields: ['text'] })
           }
           rows={5}
-          className="min-h-[120px] resize-none rounded-[1rem] border border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-3 py-2 text-[13px] leading-5 text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(74,59,42,0.05)] focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[120px] resize-none rounded-md border border-[var(--color-border-default)] bg-white px-3 py-2 text-[13px] leading-5 text-[var(--color-fg-default)]  focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </InspectorSection>
 
@@ -52,7 +52,7 @@ export function TextInspector({
                       { commit: true, fields: ['color'] }
                     )
                   }
-                  className="h-8 rounded-full border border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-2.5 text-xs text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(74,59,42,0.05)] focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-8 rounded-full border border-[var(--color-border-default)] bg-white px-2.5 text-xs text-[var(--color-fg-default)]  focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
             </label>
@@ -72,7 +72,7 @@ export function TextInspector({
                     { commit: true, fields: ['fontSize'] }
                   )
                 }
-                className="h-8 rounded-full border border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-2.5 text-xs text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(74,59,42,0.05)] focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-8 rounded-full border border-[var(--color-border-default)] bg-white px-2.5 text-xs text-[var(--color-fg-default)]  focus-visible:border-[var(--color-brand-hover)] focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </label>
           </div>
@@ -90,7 +90,7 @@ export function TextInspector({
                 )
               }
             >
-              <SelectTrigger className="h-8 rounded-full border-[var(--color-border-default)]/72 bg-[#ffffff]/88 px-2.5 text-xs text-[var(--color-fg-default)] shadow-[inset_0_1px_2px_rgba(74,59,42,0.05)] focus-visible:border-[var(--color-brand-hover)]">
+              <SelectTrigger className="h-8 rounded-full border-[var(--color-border-default)] bg-white px-2.5 text-xs text-[var(--color-fg-default)]  focus-visible:border-[var(--color-brand-hover)]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
